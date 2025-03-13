@@ -1,0 +1,267 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- 發票抬頭 -->
+    <record id="view_invoice_title_form" model="ir.ui.view">
+        <field name="name">invoice.title.form</field>
+        <field name="model">invoice.title</field>
+        <field name="arch" type="xml">
+            <form string="發票抬頭">
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="active"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_invoice_title_tree" model="ir.ui.view">
+        <field name="name">invoice.title.tree</field>
+        <field name="model">invoice.title</field>
+        <field name="arch" type="xml">
+            <tree string="發票抬頭">
+                <field name="name"/>
+                <field name="active"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_invoice_title_search" model="ir.ui.view">
+        <field name="name">invoice.title.search</field>
+        <field name="model">invoice.title</field>
+        <field name="arch" type="xml">
+            <search string="發票抬頭">
+                <field name="name"/>
+                <filter string="已啟用" name="active" domain="[('active','=',True)]"/>
+                <filter string="未啟用" name="inactive" domain="[('active','=',False)]"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_invoice_title" model="ir.actions.act_window">
+        <field name="name">發票抬頭管理</field>
+        <field name="res_model">invoice.title</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_invoice_title_search"/>
+        <field name="context">{'search_default_active': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                建立第一個發票抬頭
+            </p>
+        </field>
+    </record>
+
+
+    <!-- 發票號碼 Tree View -->
+    <record id="view_invoice_track_tree" model="ir.ui.view">
+        <field name="name">invoice.track.tree</field>
+        <field name="model">invoice.track</field>
+        <field name="arch" type="xml">
+            <tree string="發票字軌">
+                <field name="invoice_title_id"/>
+                <field name="date_from"/>
+                <field name="date_to"/>
+                <field name="section_code"/>
+                <field name="number_from"/>
+                <field name="number_to"/>
+                <field name="last_used_number"/>
+                <field name="is_active" widget="boolean_toggle"/>
+                <field name="next_available_number"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- 發票號碼 Form View -->
+    <record id="view_invoice_track_form" model="ir.ui.view">
+        <field name="name">invoice.track.form</field>
+        <field name="model">invoice.track</field>
+        <field name="arch" type="xml">
+            <form string="發票號碼追蹤">
+                <sheet>
+                    <group>
+                        <group string="基本資訊">
+                            <field name="invoice_title_id" options="{'no_create': True, 'no_create_edit': True}"/>
+                            <field name="section_code"/>
+                            <field name="number_from"/>
+                            <field name="number_to"/>
+                        </group>
+                        <group string="發票號碼資訊">
+                            <field name="date_from"/>
+                            <field name="date_to"/>
+                            <field name="invoice_period"/>
+                            <field name="is_active"/>
+                            <field name="is_used"/>
+                            <field name="last_used_number" readonly="1"/>
+                            <field name="next_available_number" readonly="1"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- 發票號碼 Search View -->
+    <record id="view_invoice_track_search" model="ir.ui.view">
+        <field name="name">invoice.track.search</field>
+        <field name="model">invoice.track</field>
+        <field name="arch" type="xml">
+            <search string="發票字軌">
+                <field name="invoice_title_id"/>
+                <field name="section_code"/>
+                <field name="number_from"/>
+                <field name="number_to"/>
+                <field name="invoice_period"/>
+                <filter string="啟用中" name="active" domain="[('is_active','=',True)]"/>
+                <filter string="未用完" name="not_used" domain="[('is_used','=',False)]"/>
+                <filter string="已用完" name="used" domain="[('is_used','=',True)]"/>
+                <group expand="0" string="Group By">
+                    <filter string="發票抬頭" name="group_by_title" context="{'group_by':'invoice_title_id'}"/>
+                    <filter string="發票週期" name="group_by_period" context="{'group_by':'invoice_period'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- 發票號碼Action -->
+    <record id="action_invoice_track" model="ir.actions.act_window">
+        <field name="name">發票字軌管理</field>
+        <field name="res_model">invoice.track</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_invoice_track_search"/>
+        <field name="context">{'search_default_not_used': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                建立第一個發票字軌
+            </p>
+        </field>
+    </record>
+
+    <!-- 發票號碼 Menu -->
+    <!-- <menuitem id="menu_invoice_management" name="發票管理" sequence="80"/> -->
+    
+    <menuitem id="menu_invoice_title"
+              name="發票抬頭管理"
+              parent="account.menu_finance_entries"
+              action="action_invoice_title"
+              sequence="19"/>
+              
+    <menuitem id="menu_invoice_track"
+              name="發票字軌管理"
+              parent="account.menu_finance_entries"
+              action="action_invoice_track"
+              sequence="20"/>
+
+    <!-- 應收/付憑單 -->   
+    <record id="view_account_move_form_inherit" model="ir.ui.view">
+        <field name="name">account.move.form.inherit</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_move_form"/>
+        <field name="arch" type="xml">
+            
+            <field name="payment_reference" position="after">
+                <field name="vendor_invoice_number" 
+                    invisible="move_type not in ('in_invoice', 'in_refund')"
+                    string="應付憑單發票號碼" placeholder="請點擊輸入帳單發票號碼"/>
+                <field name="einvoice_period" readonly="1"/>
+
+                <label for="einvoice_number" 
+                    invisible="move_type not in ('out_invoice', 'out_refund')"/>
+                <div class="o_row" 
+                    invisible="move_type not in ('out_invoice', 'out_refund')">
+                    <field name="einvoice_number" readonly="1"/>
+                    <button name="action_generate_einvoice_number" 
+                            string="產生發票號碼" 
+                            type="object"
+                            class="btn-link text-success"
+                            style="margin-left: 8px; color: #28a745;"
+                            invisible="einvoice_number"/>
+                </div>
+                <field name="einvoice_date" 
+                    invisible="move_type not in ('out_invoice', 'out_refund')" 
+                    readonly="1"/>
+                <field name="einvoice_random_number" 
+                    invisible="move_type not in ('out_invoice', 'out_refund')" 
+                    readonly="1"/>
+                <!-- <field name="einvoice_certification_number" 
+                    invisible="move_type not in ('out_invoice', 'out_refund')" 
+                    readonly="1"/> -->
+            </field>
+
+            <!-- 其他欄位的修改 -->
+            <field name="invoice_user_id" position="attributes">
+                <attribute name="invisible">move_type not in ('out_invoice', 'out_refund')</attribute>
+            </field>
+            
+            <field name="invoice_user_id" position="after">
+                <field name="employee_user_id" 
+                    invisible="move_type not in ('out_invoice', 'out_refund')"/>
+            </field>
+
+            <xpath expr="//field[@name='partner_id']" position="after">
+                <field name="partner_vat_number" 
+                    string='統一編號' 
+                    readonly="1" 
+                    invisible="move_type not in ('out_invoice', 'out_refund')"/>
+            </xpath>
+
+            <xpath expr="//group[@id='header_left_group']" position="inside">
+                <field name="is_cash_payment" 
+                    invisible="move_type not in ('out_invoice', 'out_refund')"/>
+                <field name="is_credit_payment" 
+                    invisible="move_type not in ('out_invoice', 'out_refund')"/>
+                <field name="invoice_title_id" 
+                    invisible="move_type not in ('out_invoice', 'out_refund')"
+                    options="{'no_create': True, 'no_open': True}"
+                    domain="[('is_active', '=', True), ('is_used', '=', False)]"
+                    placeholder="請選擇發票抬頭"
+                    required="move_type in ('out_invoice', 'out_refund')"/>
+                <field name="payment_cash" invisible="1"/>
+                <field name="payment_credit" invisible="1"/>
+            </xpath>
+
+            <xpath expr="/form/sheet/div[hasclass('oe_title')]" position="before">
+                <field name="qr_image" 
+                    invisible="state == 'draft' or move_type not in ('out_invoice', 'out_refund')" 
+                    widget="image" 
+                    class="oe_avatar"/>
+            </xpath>
+
+            <xpath expr="//group[@name='sale_info_group']" position="inside">
+                <field name="einvoice_seller_id" 
+                    readonly="1" 
+                    invisible="move_type not in ('out_invoice', 'out_refund')"/>
+                <field name="einvoice_buyer_id" 
+                    readonly="1" 
+                    invisible="move_type not in ('out_invoice', 'out_refund')"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- 發票號碼插入發票分析-搜尋 -->
+    <record id="view_account_invoice_report_search_inherit" model="ir.ui.view">
+        <field name="name">account.invoice.report.search.inherit</field>
+        <field name="model">account.invoice.report</field>
+        <field name="inherit_id" ref="account.view_account_invoice_report_search"/>
+        <field name="arch" type="xml">
+            <field name="product_id" position="after">
+                <field name="einvoice_number" string="發票號碼"/>
+            </field>
+            <filter name="category_product" position="after">
+                <filter string="發票號碼" name="group_by_einvoice" context="{'group_by':'einvoice_number'}"/>
+            </filter>
+        </field>
+    </record>
+
+    <!-- 發票號碼插入發票分析-tree -->
+    <record id="account_invoice_report_view_tree_inherit" model="ir.ui.view">
+        <field name="name">account.invoice.report.view.tree.inherit</field>
+        <field name="model">account.invoice.report</field>
+        <field name="inherit_id" ref="account.account_invoice_report_view_tree"/>
+        <field name="arch" type="xml">
+            <field name="invoice_date" position="after">
+                <field name="einvoice_number" string="發票號碼" optional="show"/>
+            </field>
+        </field>
+    </record>
+</odoo>

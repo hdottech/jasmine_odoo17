@@ -1,0 +1,274 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="custom_purchase_order_template" inherit_id="purchase.report_purchaseorder_document">
+        <xpath expr="//t[@t-call='web.external_layout']" position="replace">
+            <t t-call="web.html_container">
+                <!-- 設定語言 -->
+                <t t-set="lang" t-value="o.partner_id.lang or 'zh_TW'"/>
+                <!-- <t t-set="o" t-value="doc.with_context(lang=lang)"/> -->
+
+                <!-- 確保總頁數至少為 1 -->
+                <t t-set="total_pages" t-value="max(1, (len(o.order_line) + 9) // 10)"/>
+                
+                <t t-foreach="range(total_pages)" t-as="page">
+                    <t t-set="start_idx" t-value="page * 10"/>
+                    <t t-set="end_idx" t-value="min((page + 1) * 10, len(o.order_line))"/> 
+                    <t t-set="is_last_page" t-value="page == total_pages - 1"/>
+
+                    <!-- 確保不會產生空白頁 -->
+                    <t t-if="start_idx &lt; len(o.order_line) or page == 0">
+                        <div class="page"
+                            style="font-family: 細明體; padding: 0px 20px; height: auto; overflow: hidden;"
+                            t-att-style="'page-break-after: always;' if page &lt; (total_pages - 1) else ''">  
+
+                        <!-- 公司資訊區域 -->
+                        <div style="text-align: center; font-size: 20px; font-weight: bold; margin-bottom: 5px;">
+                            <span style="letter-spacing: 1em; position: relative; top: 1.5em;">採購單</span>
+                        </div>
+                        <div style="text-align: right; font-size: 12px;visibility: hidden;">
+                            公司地址：台南市海佃路二段150巷122之3號2樓<br/>
+                            服務專線：06-2463690・2450025　傳真：06-2555045<br/>
+                            門市地址：台南市海佃路二段109號　門市專線：06-2569747
+                        </div>
+
+                        <!-- 基本資訊表格 -->
+                        <table class="table" style="width: 100%; border-collapse: collapse; table-layout: fixed; margin: 8px 0 0 0; line-height: 1.5;">
+                            <!-- 第一行：供應商代號、日期、單號 -->
+                            <tr>
+                                <td style="width: 33.33%; padding: 1px 5px;">
+                                    <span style="visibility: hidden;">客戶代號：</span>
+                                    <span style="display: inline-block; text-indent: 1em;position: relative; top: -0.5em;">
+                                        <span t-field="o.partner_vendor_code"/>
+                                    </span>
+                                </td>
+                                <td style="width: 33.33%; padding: 1px 5px; position: relative; top: -0.5em; transform: translateX(-2em);">
+                                    <span style="display: inline-block; margin-left: 1.5em; text-indent: -2em;">
+                                        <span style="visibility: hidden;">年</span>
+                                        <span style="margin-left: 2.5em;" t-esc="context_timestamp(o.date_order).strftime('%Y')"/>
+                                        <span style="visibility: hidden;">月</span>
+                                        <span style="margin-left: 2.5em;" t-esc="context_timestamp(o.date_order).strftime('%m')"/>
+                                        <span style="visibility: hidden;">日</span>
+                                        <span style="margin-left: 1.5em;" t-esc="context_timestamp(o.date_order).strftime('%d')"/>
+                                    </span>
+                                </td>
+                                <td style="width: 33.33%; padding: 1px 5px;position: relative; top: -0.5em;">
+                                    <span style="visibility: hidden;">採購單號：</span>
+                                    <span style="display: inline-block; text-indent: -1em;">
+                                        <span t-field="o.name"/>　
+                                        建單: <span t-field="o.create_uid.name"/>
+                                    </span>
+                                </td>
+                            </tr>
+
+                            <!-- 第二行：供應商名稱（佔兩列）、統一編號 -->
+                            <tr>
+                                <td colspan="2" style="padding: 1px 5px;">
+                                    <span style="visibility: hidden;">供應商名稱：</span>
+                                    <span style="display: inline-block; text-indent: 1em;">
+                                        <span t-field="o.partner_id.name"/>
+                                    </span>
+                                </td>
+                                <td style="padding: 1px 5px;">
+                                    <span style="visibility: hidden;">統一編號：</span>
+                                    <span style="display: inline-block; text-indent: 1em;">
+                                        <span t-field="o.partner_vat_number"/>
+                                    </span>
+                                </td>
+                            </tr>
+
+                            <!-- 第三行：公司地址（佔兩列）、發票號碼 -->
+                            <tr>
+                                <td colspan="2" style="padding: 1px 5px;">
+                                    <span style="visibility: hidden;">公司地址：</span>
+                                    <span style="display: inline-block; text-indent: 1em;">
+                                        <t t-if="o.partner_id.street">
+                                            <span t-field="o.partner_id.street"/>,
+                                        </t>
+                                        <t t-if="o.partner_id.street2">
+                                            <span t-field="o.partner_id.street2"/>,
+                                        </t>
+                                        <t t-if="o.partner_id.city">
+                                            <span t-field="o.partner_id.city"/>,
+                                        </t>
+                                        <t t-if="o.partner_id.zip">
+                                            <span t-field="o.partner_id.zip"/>,
+                                        </t>
+                                        <t t-if="o.partner_id.state_id">
+                                            <span t-field="o.partner_id.state_id.name"/>,
+                                        </t>
+                                        <t t-if="o.partner_id.country_id">
+                                            <span t-field="o.partner_id.country_id.name"/>
+                                        </t>
+                                    </span>
+                                </td>
+                                <td style="padding: 1px 5px;">
+                                    <span style="visibility: hidden;">發票號碼：</span>
+                                    <span style="display: inline-block; text-indent: 1em;">
+                                        <!-- 發票號碼 -->
+                                    </span>
+                                </td>
+                            </tr>
+
+                            <!-- 第四行：貨運地址（佔兩列）、採購人員 -->
+                            <tr>
+                                <td colspan="2" style="padding: 1px 5px;">
+                                    <span style="visibility: hidden;">貨運地址：</span>
+                                    <span style="display: inline-block; text-indent: 1em;">
+                                        <t t-if="o.partner_id.street">
+                                            <span t-field="o.partner_id.street"/>,
+                                        </t>
+                                        <t t-if="o.partner_id.street2">
+                                            <span t-field="o.partner_id.street2"/>,
+                                        </t>
+                                        <t t-if="o.partner_id.city">
+                                            <span t-field="o.partner_id.city"/>,
+                                        </t>
+                                        <t t-if="o.partner_id.zip">
+                                            <span t-field="o.partner_id.zip"/>,
+                                        </t>
+                                        <t t-if="o.partner_id.state_id">
+                                            <span t-field="o.partner_id.state_id.name"/>,
+                                        </t>
+                                        <t t-if="o.partner_id.country_id">
+                                            <span t-field="o.partner_id.country_id.name"/>
+                                        </t>
+                                    </span>
+                                </td>
+                                <td style="padding: 1px 5px;">
+                                    <span style="visibility: hidden;">採購人員：</span>
+                                    <span style="display: inline-block; text-indent: 1em;">
+                                        <span t-field="o.user_id.name"/>
+                                    </span>
+                                </td>
+                            </tr>
+
+                            <!-- 第五行：連絡電話、連絡人、倉庫別（均分三欄）-->
+                            <tr>
+                                <td style="padding: 1px 5px;">
+                                    <span style="visibility: hidden;">連絡電話：</span>
+                                    <span style="display: inline-block; text-indent: 1em;">
+                                        <span t-field="o.partner_id.phone"/>
+                                    </span>
+                                </td>
+                                <td style="padding: 1px 5px;">
+                                    <span style="visibility: hidden;">連絡人：</span>
+                                    <span style="display: inline-block; text-indent: -1em;">
+                                        <span t-field="o.partner_id.name"/>
+                                    </span>
+                                </td>
+                                <td style="padding: 1px 5px;">
+                                    <span style="visibility: hidden;">倉庫別：</span>
+                                    <span style="display: inline-block; text-indent: 1em;">
+                                        <!-- 倉庫別 -->
+                                    </span>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <!-- 商品明細表格 -->
+                        <table class="table" style="width: 100%; border-collapse: collapse; margin: 10px 0 0 0;">
+                            <!-- 表頭 -->
+                            <thead>
+                                <tr style="font-size: 15px;">
+                                    <th style="visibility: hidden;width: 15%; text-align: center; padding: 1px;">產品編號</th>
+                                    <th style="visibility: hidden;width: 25%; text-align: center; padding: 1px;">品名 / 規格</th>
+                                    <th style="visibility: hidden;width: 13%; text-align: center; padding: 1px;">數量</th>
+                                    <th style="visibility: hidden;width: 10%; text-align: center; padding: 1px;">單價</th>
+                                    <th style="visibility: hidden;width: 15%; text-align: center; padding: 1px;">金額</th>
+                                    <th style="visibility: hidden;width: 10%; text-align: center; padding: 1px;">備註</th>
+                                </tr>
+                            </thead>
+                            
+                            <!-- 商品明細 -->
+                            <tbody>
+                                <!-- 當前頁的商品行 -->
+                                <t t-foreach="o.order_line[start_idx:end_idx]" t-as="line">
+                                    <tr style="font-size: 15px;">
+                                        <td style="padding: 1px;">
+                                            <span t-field="line.product_id.default_code"/>
+                                        </td>
+                                        <td style="padding: 1px;">
+                                            <span t-field="line.product_id.name"/>
+                                            <span t-if="line.product_id.product_template_attribute_value_ids">
+                                                <t t-foreach="line.product_id.product_template_attribute_value_ids" t-as="attr">
+                                                    <span t-field="attr.name"/>
+                                                </t>
+                                            </span>
+                                        </td>
+                                        <td style="padding: 1px; text-align: right; white-space: nowrap;">
+                                            <span style="margin-right: 2em;">
+                                                <span t-field="line.product_uom_qty" t-options='{"widget": "float", "precision": 2}'/>&amp;nbsp;件
+                                            </span>
+                                        </td>
+                                        <td style="padding: 1px; text-align: right;">
+                                            <span style="margin-right: 1em;">
+                                                <span t-field="line.price_unit" t-options='{"widget": "float", "precision": 2}'/>
+                                            </span>
+                                        </td>
+                                        <td style="padding: 1px 0px 1px 1px; text-align: right;">
+                                            <span style="margin-right: 3em;">
+                                                <span t-field="line.price_subtotal"/>
+                                            </span>
+                                        </td>
+                                        <td style="padding: 1px;"></td>
+                                    </tr>
+                                </t>
+                                
+                                <!-- 空行填充，確保每行高度一致 -->
+                                <t t-foreach="range(end_idx - start_idx, 10)" t-as="i">
+                                    <tr style="font-size: 15px; height: 24px;">
+                                        <td style="padding: 1px; vertical-align: middle;">&amp;nbsp;</td>
+                                        <td style="padding: 1px; vertical-align: middle;">&amp;nbsp;</td>
+                                        <td style="padding: 1px; vertical-align: middle;">&amp;nbsp;</td>
+                                        <td style="padding: 1px; vertical-align: middle;">&amp;nbsp;</td>
+                                        <td style="padding: 1px; vertical-align: middle;">&amp;nbsp;</td>
+                                        <td style="padding: 1px; vertical-align: middle;">&amp;nbsp;</td>
+                                    </tr>
+                                </t>
+                            </tbody>
+
+                            <!-- 備註和金額統計 -->
+                            <t t-if="page == total_pages - 1">
+                                <tfoot>
+                                    <tr><td colspan="5" style="height: 5mm;"></td></tr>
+                                    <tr style="font-size: 15px;">
+                                        <td rowspan="3" style="visibility: hidden; text-align: center; writing-mode: vertical-rl; font-size: 10px;">
+                                            備註
+                                        </td>
+                                        <td colspan="2" rowspan="3"></td>
+                                        <td style="visibility: hidden; text-align: right; padding: 2px 1px;">小計</td>
+                                        <td style="text-align: right; padding: 2px 3px;">
+                                            <span style="margin-right: 2em;">
+                                                <span t-field="o.amount_untaxed"/>
+                                            </span>
+                                        </td>
+                                        <td style="padding: 2px 1px;">&amp;nbsp;</td>
+                                    </tr>
+                                    <tr style="font-size: 15px;">
+                                        <td style="visibility: hidden; text-align: right; padding: 2px 1px;">營業稅</td>
+                                        <td style="text-align: right; padding: 2px 3px;">
+                                            <span style="margin-right: 2em;">
+                                                <span t-field="o.amount_tax"/>
+                                            </span>
+                                        </td>
+                                        <td style="padding: 2px 1px;">&amp;nbsp;</td>
+                                    </tr>
+                                    <tr style="font-size: 15px;">
+                                        <td style="visibility: hidden; text-align: right; padding: 2px 1px;">合計</td>
+                                        <td style="text-align: right; padding: 2px 3px;">
+                                            <span style="margin-right: 2em;">
+                                                <span t-field="o.amount_total"/>
+                                            </span>
+                                        </td>
+                                        <td style="padding: 2px 1px;">&amp;nbsp;</td>
+                                    </tr>
+                                </tfoot>
+                            </t>
+                        </table>
+                    </div>
+                    </t>
+                </t>
+            </t>   
+        </xpath>
+    </template>
+</odoo>

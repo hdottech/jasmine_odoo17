@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- 擴展聯絡人表單視圖 -->
+        <record id="view_partner_form_inherit" model="ir.ui.view">
+            <field name="name">res.partner.form.inherit</field>
+            <field name="model">res.partner</field>
+            <field name="inherit_id" ref="base.view_partner_form"/>
+            <field name="priority" eval="100"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='vat']" position="after">
+                    <field name="vat_number" invisible="not is_company"/>
+                    <field name="vendor_code" invisible="not is_company"/>
+                </xpath>
+                <xpath expr="//group[@name='sale']/field[@name='user_id']" position="attributes">
+                    <attribute name="invisible">1</attribute>
+                </xpath>
+                <xpath expr="//group[@name='sale']/field[@name='user_id']" position="after">
+                    <field name="employee_user_id"/>
+                </xpath>
+                <xpath expr="//field[@name='buyer_id']" position="attributes">
+                    <attribute name="invisible">1</attribute>
+                </xpath>
+                <xpath expr="//group[@name='purchase']" position="inside">
+                    <field name="employee_buyer_id" widget="many2one" domain="[('active', '=', True)]"/>
+                </xpath>
+            </field>
+        </record>
+
+        <!-- 其他視圖保持不變 -->
+        <record id="view_res_partner_filter_inherit" model="ir.ui.view">
+            <field name="name">res.partner.select.inherit</field>
+            <field name="model">res.partner</field>
+            <field name="inherit_id" ref="base.view_res_partner_filter"/>
+            <field name="arch" type="xml">
+                <field name="name" position="after">
+                    <field name="vendor_code"/>
+                    <field name="vat_number"/>
+                </field>
+            </field>
+        </record>
+
+        <record id="view_partner_tree_inherit" model="ir.ui.view">
+            <field name="name">res.partner.tree.inherit</field>
+            <field name="model">res.partner</field>
+            <field name="inherit_id" ref="base.view_partner_tree"/>
+            <field name="arch" type="xml">
+                <field name="display_name" position="after">
+                    <field name="vendor_code" optional="show"/>
+                    <field name="vat_number" optional="show"/>
+                </field>
+            </field>
+        </record>
+    </data>
+</odoo>

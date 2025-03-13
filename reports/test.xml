@@ -1,0 +1,357 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- 定義報表動作 -->
+    <record id="action_report_zhongyidao_saleorder" model="ir.actions.report">
+        <field name="name">中一刀報價單</field>
+        <field name="model">sale.order</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">jasmine.report_zhongyidao_saleorder</field>
+        <field name="report_file">jasmine.report_zhongyidao_saleorder</field>
+        <field name="print_report_name">'中一刀報價單 - %s' % object.name</field>
+        <field name="binding_model_id" ref="sale.model_sale_order"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <!-- 定義報表模板 -->
+    <template id="report_zhongyidao_saleorder">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <t t-call="jasmine.report_zhongyidao_saleorder_document"/>
+            </t>
+        </t>
+    </template>
+
+    <!-- 主要報表文檔模板 -->
+    <template id="report_zhongyidao_saleorder_document">
+        <t t-call="web.basic_layout">
+             <style>
+                .order-row {
+                    height: 24px !important;
+                    min-height: 24px !important;
+                    max-height: 24px !important;
+                    line-height: 24px !important;
+                }
+                .order-cell {
+                    padding: 0 !important;
+                    vertical-align: middle !important;
+                }
+                .page {
+                    padding-top: 0 !important;
+                }
+                @media print {
+                    .page {
+                        margin: 0;
+                        page-break-after: always;
+                        border: none !important;
+                    }
+                    .page-header {
+                        margin-top: 20px;
+                    }
+                    .page-content {
+                        margin-top: 10px;
+                    }
+                    .page-break {
+                        page-break-before: always;
+                        border: none !important;
+                    }
+                }
+                table, td, th, tr {
+                    border: none !important;
+                    border-bottom: none !important;
+                    border-top: none !important;
+                }
+                .page {
+                    padding-top: 5mm !important;  /* 增加頂部邊距到1公分 */
+                }
+                table {
+                    border-collapse: collapse !important;
+                    border: none !important;
+                }
+                
+                tr[data-id-rotation="45"] {
+                    border: none !important;
+                    border-bottom: none !important;
+                }
+                
+                .text-layer-wrapper {
+                    border: none !important;
+                }
+                
+                /* 覆蓋所有可能的表格邊框 */
+                table, tr, td, th, thead, tbody, tfoot {
+                    border: none !important;
+                    border-bottom: none !important;
+                    border-top: none !important;
+                }
+                
+                /* 特別針對這個屬性的覆蓋 */
+                *[data-id-rotation="45"] {
+                    border: none !important;
+                }
+            </style>
+            <!-- 設定語言 -->
+            <t t-set="lang" t-value="doc.partner_id.lang or 'zh_TW'"/>
+            <t t-set="o" t-value="doc.with_context(lang=lang)"/>
+            
+            <!-- 計算總頁數 -->
+            <t t-set="total_pages" t-value="max(1, (len(doc.order_line) + 9) // 10)"/>
+            
+            <!-- 分頁處理 -->
+            <t t-foreach="range(total_pages)" t-as="page">
+                <t t-set="start_idx" t-value="page * 10"/>
+                <t t-set="end_idx" t-value="min((page + 1) * 10, len(doc.order_line))"/>
+                <t t-set="is_last_page" t-value="page == total_pages - 1"/>
+
+                <div class="page" style="font-family: 細明體;">
+                    <!-- 標題區域 -->
+                    <div class="page-header">
+                        <div class="text-center" style="margin-bottom: 20px;">
+                            <h1 style="font-size: 24px; letter-spacing: 1em;">銷售訂單</h1>
+                        </div>
+
+                        <!-- 基本資訊表格 -->
+                        <table class="table table-sm" style="margin: 0; border-collapse: collapse;">
+                            <!-- 第一行：客戶代號、日期、單號 -->
+                            <tr>
+                                <td style="width: 33.33%; padding: 1px 5px;">
+                                    <div style="display: flex; align-items: center; height: 24px;">
+                                        <span style="visibility: hidden;">公司編號：</span>
+                                        <span t-field="doc.partner_vendor_code"/>
+                                    </div>
+                                </td>
+                                <td style="width: 33.33%; padding: 1px 5px; text-align: center;">
+                                    <div style="display: flex; justify-content: center; height: 24px;">
+                                        <!-- 2025的位置對齊"銷"，整體左移兩個字元 -->
+                                        <span style="visibility: hidden;">年</span>
+                                        <span style="position: absolute; margin-left: -8em;" t-esc="context_timestamp(doc.date_order).strftime('%Y')"/>
+                                        
+                                        <!-- 02的位置對齊"訂"，整體左移兩個字元 -->
+                                        <span style="visibility: hidden;">月</span>
+                                        <span style="position: absolute; margin-left: -3em;" t-esc="context_timestamp(doc.date_order).strftime('%m')"/>
+                                        
+                                        <!-- 21的位置在"單"右邊，整體左移兩個字元 -->
+                                        <span style="visibility: hidden;">日</span>
+                                        <span style="position: absolute; margin-left: 0em;" t-esc="context_timestamp(doc.date_order).strftime('%d')"/>
+                                    </div>
+                                </td>
+                                <td style="width: 33.33%; padding: 1px 5px; text-align: right;">
+                                    <div style="display: flex; align-items: center; justify-content: flex-end; height: 24px;">
+                                        <span t-field="doc.name"/>
+                                        <span style="margin: 0 4px;">　</span>
+                                        製單: <span t-field="doc.employee_user_id.name"/>
+                                    </div>
+                                </td>
+                            </tr>
+
+                            <!-- 第二行：客戶名稱（佔兩列）、統一編號 -->
+                            <tr>
+                                <td colspan="2" style="padding: 1px 5px;">
+                                    <span style="visibility: hidden;">客戶名稱：</span>
+                                    <span style="display: inline-block; text-indent: 1em;">
+                                        <span t-field="doc.partner_id.name"/>
+                                    </span>
+                                </td>
+                                <td style="padding: 1px 5px;">
+                                    <span style="visibility: hidden;">統一編號：</span>
+                                    <span style="display: inline-block; text-indent: 1em;">
+                                        <span t-field="doc.partner_vat_number"/>
+                                    </span>
+                                </td>
+                            </tr>
+
+                            <!-- 第三行：公司地址（佔兩列）、發票號碼 -->
+                            <tr>
+                                <td colspan="2" style="padding: 1px 5px;">
+                                    <span style="visibility: hidden;">公司地址：</span>
+                                    <span style="display: inline-block; text-indent: 1em;">
+                                        <t t-if="doc.partner_id.street">
+                                            <span t-field="doc.partner_id.street"/>,
+                                        </t>
+                                        <t t-if="doc.partner_id.street2">
+                                            <span t-field="doc.partner_id.street2"/>,
+                                        </t>
+                                        <t t-if="doc.partner_id.city">
+                                            <span t-field="doc.partner_id.city"/>,
+                                        </t>
+                                        <t t-if="doc.partner_id.zip">
+                                            <span t-field="doc.partner_id.zip"/>,
+                                        </t>
+                                        <t t-if="doc.partner_id.state_id">
+                                            <span t-field="doc.partner_id.state_id.name"/>,
+                                        </t>
+                                        <t t-if="doc.partner_id.country_id">
+                                            <span t-field="doc.partner_id.country_id.name"/>
+                                        </t>
+                                    </span>
+                                </td>
+                                <td style="padding: 1px 5px;">
+                                    <span style="visibility: hidden;">發票號碼：</span>
+                                    <span style="display: inline-block; text-indent: 1em;">
+                                        <!-- 發票號碼 -->
+                                    </span>
+                                </td>
+                            </tr>
+
+                            <!-- 第四行：送貨地址（佔兩列）、業務姓名 -->
+                            <tr>
+                                <td colspan="2" style="padding: 1px 5px;">
+                                    <span style="visibility: hidden;">送貨地址：</span>
+                                    <span style="display: inline-block; text-indent: 1em;">
+                                        <t t-if="doc.partner_shipping_id.street">
+                                            <span t-field="doc.partner_shipping_id.street"/>,
+                                        </t>
+                                        <t t-if="doc.partner_shipping_id.street2">
+                                            <span t-field="doc.partner_shipping_id.street2"/>,
+                                        </t>
+                                        <t t-if="doc.partner_shipping_id.city">
+                                            <span t-field="doc.partner_shipping_id.city"/>,
+                                        </t>
+                                        <t t-if="doc.partner_shipping_id.zip">
+                                            <span t-field="doc.partner_shipping_id.zip"/>,
+                                        </t>
+                                        <t t-if="doc.partner_shipping_id.state_id">
+                                            <span t-field="doc.partner_shipping_id.state_id.name"/>,
+                                        </t>
+                                        <t t-if="doc.partner_shipping_id.country_id">
+                                            <span t-field="doc.partner_shipping_id.country_id.name"/>
+                                        </t>
+                                    </span>
+                                </td>
+                                <td style="padding: 1px 5px;">
+                                    <span style="visibility: hidden;">業務姓名：</span>
+                                    <span style="display: inline-block; text-indent: 1em;">
+                                        <span t-field="doc.employee_user_id.name"/>
+                                    </span>
+                                </td>
+                            </tr>
+
+                            <!-- 第五行：連絡電話、連絡人、倉庫別（均分三欄）-->
+                            <tr>
+                                <td style="padding: 1px 5px;">
+                                    <span style="visibility: hidden;">連絡電話：</span>
+                                    <span style="display: inline-block; text-indent: 1em;">
+                                        <span t-field="doc.partner_id.phone"/>
+                                    </span>
+                                </td>
+                                <td style="padding: 1px 5px;">
+                                    <span style="visibility: hidden;">連絡人：</span>
+                                    <span style="display: inline-block; text-indent: -1em;">
+                                        <span t-field="doc.partner_id.name"/>
+                                    </span>
+                                </td>
+                                <td style="padding: 1px 5px;">
+                                    <span style="visibility: hidden;">倉庫別：</span>
+                                    <span style="display: inline-block; text-indent: 1em;">
+                                        <!-- 倉庫別 -->
+                                    </span>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="page-content">
+                        <!-- 商品明細表格 -->
+                        <table class="table table-sm" style="margin: 0; border-collapse: collapse;">
+                            <thead>
+                                <tr style="font-size: 15px; border: none;">
+                                    <th style="width: 15%; visibility: hidden; padding: 1px;">產品編號</th>
+                                    <th style="width: 25%; visibility: hidden; padding: 1px;">品名 / 規格</th>
+                                    <th style="width: 13%; visibility: hidden; padding: 1px;" class="text-right">數量</th>
+                                    <th style="width: 10%; visibility: hidden; padding: 1px;" class="text-right">單價</th>
+                                    <th style="width: 15%; visibility: hidden; padding: 1px;" class="text-right">金額</th>
+                                    <th style="width: 10%; visibility: hidden; padding: 1px;">備註</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- 當前頁的商品行 -->
+                                <t t-foreach="doc.order_line[start_idx:end_idx]" t-as="line">
+                                    <tr style="font-size: 15px; border: none;">
+                                        <td style="padding: 1px;">
+                                            <span t-field="line.product_id.default_code"/>
+                                        </td>
+                                        <td style="padding: 1px;">
+                                            <span t-field="line.product_id.name"/>
+                                            <span t-if="line.product_id.product_template_attribute_value_ids">
+                                                <t t-foreach="line.product_id.product_template_attribute_value_ids" t-as="attr">
+                                                    <span t-field="attr.name"/>
+                                                </t>
+                                            </span>
+                                        </td>
+                                        <!-- 商品明細中的數量 -->
+                                        <td style="padding: 1px; text-align: right; white-space: nowrap;">
+                                            <span style="margin-right: 2em;">
+                                                <span t-field="line.product_uom_qty" t-options='{"widget": "float", "precision": 2}'/>&amp;nbsp;件
+                                            </span>
+                                        </td>
+                                        <!-- 商品明細中的單價 -->
+                                        <td style="padding: 1px; text-align: right;">
+                                            <span style="margin-right: 1em;">
+                                                <span t-field="line.price_unit" t-options='{"widget": "float", "precision": 2}'/>
+                                            </span>
+                                        </td>
+                                        <!-- 商品明細中的金額 -->
+                                        <td style="padding: 1px 0px 1px 1px; text-align: right;">
+                                            <span style="margin-right: 3em;">
+                                                <span t-field="line.price_subtotal"/>
+                                            </span>
+                                        </td>
+                                        <td style="padding: 1px;"></td>
+                                    </tr>
+                                </t>                                   
+                                <!-- 空行填充，確保每行高度一致 -->
+                                <t t-foreach="range(10 - (end_idx - start_idx))" t-as="i">
+                                    <tr class="order-row">
+                                        <td class="order-cell">&amp;nbsp;</td>
+                                        <td class="order-cell">&amp;nbsp;</td>
+                                        <td class="order-cell">&amp;nbsp;</td>
+                                        <td class="order-cell">&amp;nbsp;</td>
+                                        <td class="order-cell">&amp;nbsp;</td>
+                                        <td class="order-cell">&amp;nbsp;</td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                            <!-- 備註和金額統計 -->
+                            <t t-if="page == total_pages - 1">
+                            <tfoot>
+                                <tr>
+                                    <td colspan="6" style="height: 10px;"></td>   <!-- 增加這行的高度來向下移動 -->
+                                </tr>
+                                <tr>
+                                    <td colspan="6"></td>
+                                </tr>
+                                <tr style="font-size: 15px; line-height: 12px;">
+                                    <td rowspan="3" style="visibility: hidden; text-align: center; writing-mode: vertical-rl; font-size: 10px;">
+                                        備註
+                                    </td>
+                                    <td colspan="2" rowspan="3"></td>
+                                    <td style="visibility: hidden; text-align: right; border: none;">小計</td>
+                                    <td style="text-align: right; padding: 0;">
+                                        <span style="margin-right: 2em;">
+                                            <span t-field="doc.amount_untaxed"/>
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr style="font-size: 15px; line-height: 12px;">
+                                    <td style="visibility: hidden; text-align: right; border: none;">營業稅</td>
+                                    <td style="text-align: right; padding: 0;">
+                                        <span style="margin-right: 2em;">
+                                            <span t-field="doc.amount_tax"/>
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr style="font-size: 15px; line-height: 12px;">
+                                    <td style="visibility: hidden; text-align: right; border: none;">合計</td>
+                                    <td style="text-align: right; padding: 0;">
+                                        <span style="margin-right: 2em;">
+                                            <span t-field="doc.amount_total"/>
+                                        </span>
+                                    </td>
+                                </tr>
+                            </tfoot>
+                        </t>
+                        </table>
+                    </div>
+                </div>
+            </t>
+        </t>
+    </template>
+</odoo>

@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_invoice_title_user,invoice.title user,model_invoice_title,base.group_user,1,0,0,0
+access_invoice_title_manager,invoice.title manager,model_invoice_title,account.group_account_manager,1,1,1,1
+access_invoice_track_user,invoice.track user,model_invoice_track,base.group_user,1,0,0,0
+access_invoice_track_manager,invoice.track manager,model_invoice_track,account.group_account_manager,1,1,1,1
