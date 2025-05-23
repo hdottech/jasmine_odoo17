@@ -1,0 +1,8 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_account_payment_register,access_account_payment_register,model_account_payment_register,base.group_user,1,1,1,1
+access_account_bill,access_account_bill,model_account_bill,base.group_user,1,1,1,1
+access_account_payment,access_account_payment,model_account_payment,base.group_user,1,1,1,1
+access_account_bill_cash_wizard,access_account_bill_cash_wizard,model_account_bill_cash_wizard,base.group_user,1,1,1,1
+access_account_move_line,access_account_move_line,model_account_move_line,base.group_user,1,1,1,1
+access_account_bill_void_wizard,access_account_bill_void_wizard,model_account_bill_void_wizard,base.group_user,1,1,1,1
+access_account_bill_line,access_account_bill_line,model_account_bill_line,base.group_user,1,1,1,1

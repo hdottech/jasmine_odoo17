@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_account_payment_register_form" model="ir.ui.view">
+        <field name="name">account.payment.register.form.inherit</field>
+        <field name="model">account.payment.register</field>
+        <field name="inherit_id" ref="account.view_account_payment_register_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//group" position="replace">
+                <group>
+                  <group col='2'>
+                    <field name="journal_type"/>
+                    <field name="journal_id" invisible="journal_type == 'check'" required="1"/>
+                    <field name="payment_method_line_id"
+                                   required="1"  options="{'no_create': True, 'no_open': True}"/>
+                    <field name="amount"/>
+                    <field name="currency_id" string="幣別"/>
+                    <field name="payment_date" invisible="journal_type == 'check'"/>    
+                    <field name="bank_id"  required="1"/>
+                    <field name="communication" placeholder="輸入付款備忘錄"/>
+                  </group>
+                  <group col='2'>
+                    <field name="check_number" placeholder="請輸入票據單號" invisible="journal_type != 'check'"/>
+                    <field name="drawer" invisible="journal_type != 'check'" required="journal_type == 'check'"/>
+                    <field name="issue_date" invisible="journal_type != 'check'" required="journal_type == 'check'"/>
+                    <field name="due_date" invisible="journal_type != 'check'" required="journal_type == 'check'"/>
+                    <field name="bill_type" invisible="journal_type != 'check'" required="journal_type == 'check'"/>
+                  </group>
+                </group>
+            </xpath>
+        </field>
+    </record>
+</odoo>

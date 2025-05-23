@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- 更正單 Form View -->
+    <record id="view_invoice_correction_form" model="ir.ui.view">
+        <field name="name">invoice.correction.form</field>
+        <field name="model">invoice.correction</field>
+        <field name="arch" type="xml">
+            <form string="發票更正單">
+                <header>
+                    <button name="action_confirm" string="確認更正" type="object"
+                            class="btn-primary" invisible="state != 'draft'"/>
+                    <!-- <button name="action_cancel" string="取消" type="object"
+                            class="btn-secondary" invisible="state != 'draft'"/> -->
+                    <field name="state" widget="statusbar" statusbar_visible="draft,done"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" readonly="1"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="original_invoice_id" readonly="state != 'draft'"/>
+                            <field name="original_invoice_number" readonly="1"/>
+                            <field name="original_invoice_date" readonly="1"/>
+                            <field name="correction_date" readonly="state != 'draft'"/>
+                        </group>
+                        <group>
+                            <field name="correction_reason" readonly="state != 'draft'"/>
+                            <field name="reason_detail" readonly="state != 'draft'"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="買方資訊">
+                            <group>
+                                <group string="原始買方資訊" readonly="1">
+                                    <field name="original_buyer_name" readonly="1"/>
+                                    <field name="original_buyer_tax_id" readonly="1"/>
+                                    <field name="original_buyer_address" readonly="1"/>
+                                </group>
+                                <group string="更正買方資訊">
+                                    <field name="buyer_name" readonly="state != 'draft'"/>
+                                    <field name="buyer_tax_id" readonly="state != 'draft'"/>
+                                    <field name="buyer_address" readonly="state != 'draft'"/>
+                                </group>
+                            </group>
+                        </page>
+                        <page string="稅務資訊">
+                            <group>
+                                <group string="原始稅務資訊" readonly="1">
+                                    <field name="original_tax_type" readonly="1"/>
+                                    <field name="original_tax_rate" readonly="1"/>
+                                </group>
+                                <group string="更正稅務資訊">
+                                    <field name="tax_type" readonly="state != 'draft'"/>
+                                    <field name="tax_rate" readonly="state != 'draft'"/>
+                                </group>
+                            </group>
+                        </page>
+                        <page string="商品明細資訊">
+                            <field name="correction_line_ids" readonly="state != 'draft'">
+                                <tree editable="bottom" create="false" delete="false">
+                                    <field name="product_name" readonly="1" force_save="1"/>
+                                    <field name="quantity" readonly="1" force_save="1"/>
+                                    <field name="unit_price" readonly="1" force_save="1"/>
+                                    <field name="unit" readonly="1" force_save="1"/>
+                                    <field name="line_amount" readonly="1" force_save="1"/>
+                                    <field name="corrected_product_name" force_save="1"/>
+                                    <field name="corrected_quantity" force_save="1"/>
+                                    <field name="corrected_unit_price" force_save="1"/>
+                                    <field name="corrected_unit" force_save="1"/>
+                                    <field name="corrected_line_amount" readonly="1"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="備註">
+                            <group>
+                                <group string="原始備註" readonly="1">
+                                    <field name="original_remark" readonly="1"/>
+                                </group>
+                                <group string="更正備註">
+                                    <field name="remark" readonly="state != 'draft'"/>
+                                </group>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- 更正單 Tree View -->
+    <record id="view_invoice_correction_tree" model="ir.ui.view">
+        <field name="name">invoice.correction.tree</field>
+        <field name="model">invoice.correction</field>
+        <field name="arch" type="xml">
+            <tree string="發票更正單">
+                <field name="name"/>
+                <field name="original_invoice_number"/>
+                <field name="correction_date"/>
+                <field name="correction_reason"/>
+                <field name="state" decoration-success="state == 'done'" decoration-info="state == 'draft'" decoration-danger="state == 'cancel'"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- 更正單 Action -->
+    <record id="action_invoice_correction" model="ir.actions.act_window">
+        <field name="name">發票更正</field>
+        <field name="res_model">invoice.correction</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                尚無更正單記錄
+            </p>
+            <p>
+                請先選擇一筆電子發票，再進行更正操作。
+            </p>
+        </field>
+    </record>
+</odoo>

@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <data>
+    <record id="view_fanyuu_config_settings" model="ir.ui.view">
+      <field name="name">res.config.settings.view.form.inherit.fanyuu</field>
+      <field name="model">res.config.settings</field>
+      <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+      <field name="arch" type="xml">
+        <form position="inside">
+          <div class="app_settings_block" groups="base.group_system" data-string="汎宇電子發票設定" data-key="fanyuu_einvoice_settings">
+            <h2>汎宇電子發票設定</h2>
+            <div class="row mt16 o_settings_container">
+              <div class="col-12 col-lg-6 o_setting_box">
+                <div class="o_setting_right_pane">
+                  <span class="o_form_label">API 認證資訊</span>
+                  <div class="text-muted">設定汎宇 API 傳送必要欄位</div>
+                  <div class="content-group mt16">
+                    <div class="row o_form_field">
+                      <div class="col-lg-3 o_light_label">汎宇 User ID</div>
+                      <div class="col-lg-9">
+                        <field name="fanyuu_user_id"/>
+                      </div>
+                    </div>
+                    <div class="row mt16 o_form_field">
+                      <div class="col-lg-3 o_light_label">汎宇 Auth 密碼</div>
+                      <div class="col-lg-9">
+                        <field name="fanyuu_auth" password="True"/>
+                      </div>
+                    </div>
+                    <div class="row mt16 o_form_field">
+                      <div class="col-lg-3 o_light_label">汎宇 API Key</div>
+                      <div class="col-lg-9">
+                        <field name="fanyuu_apikey" password="True"/>
+                      </div>
+                    </div>
+                    <div class="row mt16 o_form_field">
+                      <div class="col-lg-3 o_light_label">公司統編</div>
+                      <div class="col-lg-9">
+                        <field name="fanyuu_company_id"/>
+                      </div>
+                    </div>
+                    <div class="row mt16 o_form_field">
+                      <div class="col-lg-3 o_light_label">API 端點</div>
+                      <div class="col-lg-9">
+                        <field name="fanyuu_endpoint"/>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </form>
+      </field>
+    </record>
+  </data>
+</odoo>

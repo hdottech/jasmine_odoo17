@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="paperformat_2x5" model="report.paperformat">
+            <field name="name">2 x 5 公分標籤</field>
+            <field name="default" eval="False" />
+            <field name="format">custom</field>
+            <field name="page_height">20</field>
+            <field name="page_width">50</field>
+            <field name="orientation">Portrait</field>
+            <field name="margin_top">0</field>
+            <field name="margin_bottom">0</field>
+            <field name="margin_left">0</field>
+            <field name="margin_right">0</field>
+            <field name="header_line" eval="False" />
+            <field name="header_spacing">0</field>
+            <field name="dpi">96</field>
+        </record>
+        
+        <record id="report_product_template_label_2x5" model="ir.actions.report">
+            <field name="name">產品標籤 (2x5)</field>
+            <field name="model">product.product</field>
+            <field name="report_type">qweb-pdf</field>
+            <field name="report_name">jasmine.report_producttemplatelabel2x5</field>
+            <field name="report_file">jasmine.report_producttemplatelabel2x5</field>
+            <!-- <field name="paperformat_id" ref="jasmine.paperformat_2x5"/> -->
+            <field name="print_report_name">'產品標籤 - %s' % object.name</field>
+            <field name="binding_model_id" ref="product.model_product_product"/>
+            <field name="binding_type">report</field>
+        </record>
+        
+        <!-- 標籤內容模板 -->
+        <template id="report_simple_label2x5">
+            <t t-set="barcode_size" t-value="'width:18mm;height:6mm'"/>
+            <t t-set="table_style" t-value="'width:50mm;height:20mm;' + table_style"/>
+            <td t-att-style="make_invisible and 'visibility:hidden;'" >
+                <div class="o_label_full" t-att-style="table_style">
+                    <!-- 產品名稱 -->
+                    <div class="o_label_name" style="font-size:12px; height:auto; min-height:1em; padding:1px;text-align: center">
+                        <strong t-esc="product.display_name"/>
+                    </div>
+                    
+                    <!-- 資料部分 -->
+                    <div style="position:relative; height:14mm; padding:0;">
+                        <!-- 左側條碼區域 -->
+                        <div style="width:60%; padding:0 1px; text-align:center; float:left;">
+                            <t t-if="barcode">
+                                <!-- 保留與上緣間距約 2mm -->
+                                <div style="margin-top:2mm; margin-bottom:0; line-height: 0;">
+                                    <div t-out="barcode"
+                                        t-options="{'widget': 'barcode', 'symbology': 'auto', 'img_style': 'width:100px;height:30px;'}"
+                                        style="display:inline-block; margin:0; padding:0;"/>
+                                </div>
+                                <!-- 條碼下方的數字 -->
+                                <div style="font-size:6px; margin-top:0px; line-height:1;">
+                                    <span t-out="barcode"/>
+                                </div>
+                            </t>
+                        </div>
+                        
+                        <!-- 右下角價格 - 絕對定位 -->
+                        <div style="position:absolute; bottom:2px; right:3px; text-align:right;">
+                            <strong style="font-size:15px;">
+                                $ <t t-esc="int(pricelist._get_product_price(product, 1, pricelist.currency_id or product.currency_id))"/>
+                            </strong>
+                        </div>
+                    </div>
+                </div>
+            </td>
+        </template>
+        
+        <!-- 主模板，修正 t-as 屬性缺失問題 -->
+        <template id="report_producttemplatelabel2x5">
+            <t t-call="web.basic_layout">
+                <div class="page">
+                    <!-- 基本設置 -->
+                    <t t-set="columns" t-value="4"/>
+                    <t t-set="rows" t-value="7"/>
+                    
+                    <!-- 將所有產品和條碼放入一個扁平列表 -->
+                    <t t-set="all_products" t-value="[]"/>
+                    <t t-foreach="quantity.items()" t-as="product_data">
+                        <t t-set="product" t-value="product_data[0]"/>
+                        <t t-foreach="product_data[1]" t-as="barcode_and_qty">
+                            <t t-set="barcode" t-value="barcode_and_qty[0]"/>
+                            <t t-foreach="range(barcode_and_qty[1])" t-as="i">
+                                <t t-set="all_products" t-value="all_products + [(product, barcode)]"/>
+                            </t>
+                        </t>
+                    </t>
+                    
+                    <t t-set="total" t-value="len(all_products)"/>
+                    <t t-set="rows_needed" t-value="(total + columns - 1) // columns"/>
+                    
+                    <table style="width:100%; border-spacing:0; border-collapse:separate;">
+                        <t t-set="index" t-value="0"/>
+                        
+                        <t t-foreach="range(rows_needed)" t-as="row_idx">
+                            <tr>
+                                <t t-foreach="range(columns)" t-as="col">
+                                    <t t-if="index &lt; total">
+                                        <t t-set="current_product" t-value="all_products[index][0]"/>
+                                        <t t-set="current_barcode" t-value="all_products[index][1]"/>
+                                        
+                                        <t t-set="product" t-value="current_product"/>
+                                        <t t-set="barcode" t-value="current_barcode"/>
+                                        <t t-set="make_invisible" t-value="False"/>
+                                        <t t-set="table_style" t-value="'border: 1px solid %s;' % (product.env.user.company_id.primary_color or 'black')"/>
+                                        
+                                        <t t-call="jasmine.report_simple_label2x5"/>
+                                        <t t-set="index" t-value="index + 1"/>
+                                    </t>
+                                    <t t-else="">
+                                        <td style="width:25%; padding:0;"></td>
+                                    </t>
+                                </t>
+                            </tr>
+                        </t>
+                    </table>
+                </div>
+            </t>
+        </template>
+    </data>
+</odoo>

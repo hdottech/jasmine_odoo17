@@ -1,0 +1,26 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_invoice_title_user,invoice.title user,model_invoice_title,base.group_user,1,0,0,0
+access_invoice_title_manager,invoice.title manager,model_invoice_title,account.group_account_manager,1,1,1,1
+access_invoice_track_user,invoice.track user,model_invoice_track,base.group_user,1,0,0,0
+access_invoice_track_manager,invoice.track manager,model_invoice_track,account.group_account_manager,1,1,1,1
+access_invoice_information_account_user,invoice.information.account.user,model_invoice_information,account.group_account_user,1,1,1,0
+access_invoice_information_account_manager,invoice.information.account.manager,model_invoice_information,account.group_account_manager,1,1,1,1
+access_invoice_line_account_user,invoice.line.account.user,model_invoice_line,account.group_account_user,1,1,1,0
+access_invoice_line_account_manager,invoice.line.account.manager,model_invoice_line,account.group_account_manager,1,1,1,1
+access_invoice_allowance_user,invoice.allowance.user,model_invoice_allowance,account.group_account_user,1,1,1,1
+access_invoice_allowance_line_user,invoice.allowance.line.user,model_invoice_allowance_line,account.group_account_user,1,1,1,1
+access_invoice_allowance_manager,invoice.allowance.manager,model_invoice_allowance,account.group_account_manager,1,1,1,1
+access_invoice_allowance_line_manager,invoice.allowance.line.manager,model_invoice_allowance_line,account.group_account_manager,1,1,1,1
+access_invoice_return_user,invoice.return.user,model_invoice_return,account.group_account_invoice,1,1,1,1
+access_invoice_return_readonly,invoice.return.readonly,model_invoice_return,account.group_account_readonly,1,0,0,0
+access_invoice_return_line_user,invoice.return.line.user,model_invoice_return_line,account.group_account_invoice,1,1,1,1
+access_invoice_return_line_readonly,invoice.return.line.readonly,model_invoice_return_line,account.group_account_readonly,1,0,0,0
+access_invoice_correction_user,invoice.correction.user,model_invoice_correction,account.group_account_user,1,1,1,1
+access_invoice_correction_manager,invoice.correction.manager,model_invoice_correction,account.group_account_manager,1,1,1,1
+access_invoice_correction_line_user,invoice.correction.line.user,model_invoice_correction_line,account.group_account_user,1,1,1,1
+access_invoice_correction_line_manager,invoice.correction.line.manager,model_invoice_correction_line,account.group_account_manager,1,1,1,1
+access_invoice_correction_readonly,invoice.correction.readonly,model_invoice_correction,account.group_account_readonly,1,0,0,0
+access_invoice_correction_line_readonly,invoice.correction.line.readonly,model_invoice_correction_line,account.group_account_readonly,1,0,0,0
+access_invoice_cancellation_user,invoice.cancellation.user,model_invoice_cancellation,account.group_account_user,1,1,1,1
+access_invoice_cancellation_manager,invoice.cancellation.manager,model_invoice_cancellation,account.group_account_manager,1,1,1,1
+access_invoice_cancellation_readonly,invoice.cancellation.readonly,model_invoice_cancellation,account.group_account_readonly,1,0,0,0

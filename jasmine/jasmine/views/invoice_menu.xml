@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="e_invoice" name="電子發票" sequence="5" parent="account.menu_finance_entries">
+    </menuitem>
+    
+    <menuitem id="menu_invoice_title"
+            name="發票抬頭管理"
+            parent="e_invoice"
+            action="action_invoice_title"
+            sequence="19"/>
+            
+    <menuitem id="menu_invoice_track"
+            name="發票字軌管理"
+            parent="e_invoice"
+            action="action_invoice_track"
+            sequence="20"/>
+            
+    <menuitem id="menu_invoice_information"
+            name="電子發票資訊"
+            parent="e_invoice"
+            action="action_invoice_information"
+            sequence="50"/>
+    <!-- <menuitem id="menu_invoice_allowance_root" 
+            name="折讓證明" 
+            parent="e_invoice" 
+            action="action_invoice_allowance" 
+            sequence="60"/> -->
+    <menuitem id="menu_sales_return_root" 
+            name="銷貨退回" 
+            parent="e_invoice" 
+            action="action_sales_return" 
+            sequence="70"/>
+    <menuitem id="menu_purchase_return_root" 
+            name="進貨退出" 
+            parent="e_invoice" 
+            action="action_purchase_return" 
+            sequence="80"/>
+    <menuitem id="menu_invoice_correction_root" 
+            name="發票更正" 
+            parent="e_invoice" 
+            action="action_invoice_correction" 
+            sequence="90"/>
+    <menuitem id="menu_invoice_cancellation_root" 
+            name="發票作廢" 
+            parent="e_invoice" 
+            action="action_invoice_cancellation" 
+            sequence="100"/>
+
+</odoo>

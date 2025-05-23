@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- 退回單 Form View -->
+    <record id="view_invoice_return_form" model="ir.ui.view">
+        <field name="name">invoice.return.form</field>
+        <field name="model">invoice.return</field>
+        <field name="arch" type="xml">
+            <form string="退回單">
+                <header>
+                    <button name="action_confirm" string="確認退回" type="object"
+                            class="btn-primary" invisible="state != 'draft'"/>
+                    <!-- <button name="action_cancel" string="取消" type="object"
+                            class="btn-secondary" invisible="state != 'done'"/> -->
+                    <field name="state" widget="statusbar" statusbar_visible="draft,done"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" readonly="1"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="original_invoice_id" readonly="state != 'draft'"/>
+                            <field name="original_invoice_number" readonly="1"/>
+                            <field name="original_invoice_date" readonly="1"/>
+                            <field name="return_type" readonly="state != 'draft'"/>
+                        </group>
+                        <group>
+                            <field name="return_date" readonly="state != 'draft'"/>
+                            <field name="return_reason" readonly="state != 'draft'"/>
+                            <field name="reason_detail" readonly="state != 'draft'"/>
+                            <field name="total_amount" readonly="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="退回明細">
+                            <field name="return_line_ids" readonly="state != 'draft'">
+                                <tree editable="bottom" create="false" delete="false">
+                                    <field name="original_invoice_line_product" readonly="1" force_save="1"/>
+                                    <field name="original_quantity" readonly="1" force_save="1"/>
+                                    <field name="already_returned" readonly="1" force_save="1"/>
+                                    <field name="remaining_quantity" readonly="1" force_save="1"/>
+                                    <field name="unit_price" readonly="1" force_save="1"/>
+                                    <field name="unit" readonly="1" force_save="1"/>
+                                    <field name="return_quantity"/>
+                                    <field name="return_amount" readonly="1"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- 退回單 Tree View -->
+    <record id="view_invoice_return_tree" model="ir.ui.view">
+        <field name="name">invoice.return.tree</field>
+        <field name="model">invoice.return</field>
+        <field name="arch" type="xml">
+            <tree string="退回單">
+                <field name="name"/>
+                <field name="original_invoice_number"/>
+                <field name="return_type"/>
+                <field name="return_date"/>
+                <field name="total_amount"/>
+                <field name="state" decoration-success="state == 'done'" decoration-info="state == 'draft'" decoration-danger="state == 'cancel'"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- 退回單 Search View -->
+    <record id="view_invoice_return_search" model="ir.ui.view">
+        <field name="name">invoice.return.search</field>
+        <field name="model">invoice.return</field>
+        <field name="arch" type="xml">
+            <search string="退回單搜尋">
+                <field name="name"/>
+                <field name="original_invoice_number"/>
+                <field name="return_type"/>
+                <separator/>
+                <filter string="銷貨退回" name="sales_return" domain="[('return_type', '=', 'sales_return')]"/>
+                <filter string="進貨退出" name="purchase_return" domain="[('return_type', '=', 'purchase_return')]"/>
+                <separator/>
+                <filter string="草稿" name="draft" domain="[('state', '=', 'draft')]"/>
+                <filter string="已確認" name="done" domain="[('state', '=', 'done')]"/>
+                <filter string="已取消" name="cancel" domain="[('state', '=', 'cancel')]"/>
+                <group expand="0" string="分組依據">
+                    <filter string="退回類型" name="group_by_type" context="{'group_by': 'return_type'}"/>
+                    <filter string="狀態" name="group_by_state" context="{'group_by': 'state'}"/>
+                    <filter string="退回原因" name="group_by_reason" context="{'group_by': 'return_reason'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- 退回單 Action -->
+    <record id="action_invoice_return" model="ir.actions.act_window">
+        <field name="name">銷貨/進貨退回</field>
+        <field name="res_model">invoice.return</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                尚無退回單記錄
+            </p>
+            <p>
+                請先建立一筆電子發票後，透過其產生退回單。
+            </p>
+        </field>
+    </record>
+
+    <!-- 銷貨退回 Action -->
+    <record id="action_sales_return" model="ir.actions.act_window">
+        <field name="name">銷貨退回</field>
+        <field name="res_model">invoice.return</field>
+        <field name="view_mode">tree,form</field>
+        <field name="context">{'default_return_type': 'sales_return', 'search_default_sales_return': 1}</field>
+    </record>
+
+    <!-- 進貨退出 Action -->
+    <record id="action_purchase_return" model="ir.actions.act_window">
+        <field name="name">進貨退出</field>
+        <field name="res_model">invoice.return</field>
+        <field name="view_mode">tree,form</field>
+        <field name="context">{'default_return_type': 'purchase_return', 'search_default_purchase_return': 1}</field>
+    </record>
+</odoo>

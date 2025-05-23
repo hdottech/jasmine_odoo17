@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+        <record id="view_order_form_inherit" model="ir.ui.view">
+            <field name="name">sale.order.form.inherit</field>
+            <field name="model">sale.order</field>
+            <field name="inherit_id" ref="sale.view_order_form"/>
+            <field name="arch" type="xml">
+                <field name="user_id" position="attributes">
+                    <attribute name="invisible">1</attribute>
+                </field>
+                <field name="user_id" position="after">
+                    <field name="employee_user_id"/>
+                </field>
+                <xpath expr="//field[@name='partner_id']" position="after">
+                    <field name="partner_vat_number" readonly="1"/>
+                </xpath>
+                <xpath expr="//field[@name='order_line']/tree//field[@name='product_id']" position="before">
+                    <field name="sequence_number" readonly="1"/>
+                </xpath>
+            </field>
+        </record>
+        <record id="view_order_form_inherit_signature" model="ir.ui.view">
+            <field name="name">sale.order.form.inherit.signature</field>
+            <field name="model">sale.order</field>
+            <field name="inherit_id" ref="sale.view_order_form"/>
+            <field name="arch" type="xml">
+                <field name="signed_by" position="attributes">
+                    <attribute name="invisible">1</attribute>
+                </field>
+                <field name="signed_on" position="attributes">
+                    <attribute name="invisible">1</attribute>
+                </field>
+                <xpath expr="//page[@name='customer_signature']//field[@name='signature']" position="replace">
+                    <group>
+                        <field name="signature" widget="signature"  string="客戶簽名"/>
+                    </group>
+                </xpath>
+            </field>
+        </record>
+
+        <record id="view_sale_order_form_inherit_list_button" model="ir.ui.view">
+            <field name="name">sale.order.form.inherit.list.button</field>
+            <field name="model">sale.order</field>
+            <field name="inherit_id" ref="sale.view_order_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='order_line']/tree//control/create[@name='add_product_control']" position="after">
+                    <button name="action_open_sales_report" 
+                            string="銷售分析"
+                            type="object"
+                            class="px-4 btn-link"/>
+                </xpath>
+            </field>
+        </record>
+
+        <!-- 收/交貨單 + sequence_number -->
+        <record id="view_picking_form_inherit" model="ir.ui.view">
+            <field name="name">stock.picking.form.inherit</field>
+            <field name="model">stock.picking</field>
+            <field name="inherit_id" ref="stock.view_picking_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='move_ids_without_package']/tree" position="attributes">
+                    <attribute name="editable">bottom</attribute>
+                    <attribute name="decoration-muted">scrapped == True</attribute>
+                    <attribute name="default_order">sequence, id</attribute>
+                </xpath>
+                
+                <xpath expr="//field[@name='move_ids_without_package']/tree//field[@name='product_id']" position="before">
+                    <field name="sequence" widget="handle"/>
+                    <field name="sequence_number" width="40" style="width:40px; margin-right:0px; padding-right:0px"/>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>

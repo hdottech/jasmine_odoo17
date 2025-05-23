@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- 序列定義 -->
+        <record id="seq_account_bill" model="ir.sequence">
+            <field name="name">Bill</field>
+            <field name="code">account.bill</field>
+            <field name="prefix">BILL</field>
+            <field name="padding">4</field>
+        </record>
+
+        <!-- 票據表單視圖 -->
+        <record id="view_form_bill" model="ir.ui.view">
+            <field name="name">bill.form</field>
+            <field name="model">account.bill</field>
+            <field name="arch" type="xml">
+                <form string="票據">
+                    <header>
+                        <button name="cash_payment" type="object" string="兌現" class="oe_highlight" 
+                                invisible="state not in ('confirmed')"/>
+                        <button name="action_cancel_cash" type="object" string="取消兌現" 
+                                invisible="state != 'cashed'"
+                                confirm="確定要取消兌現此票據嗎？"/>
+                        <button name="action_void" type="object" string="註銷" 
+                                invisible="state not in ('confirmed', 'cashed')"
+                                confirm="確定要註銷此票據嗎？"/>
+                        <button name="action_cancel" type="object" string="取消" 
+                                invisible="state != 'confirmed'"
+                                confirm="確定要取消此票據嗎？"/>
+                        <field name="state" widget="statusbar" 
+                            statusbar_visible="confirmed,cashed,void,cancelled"/>
+                    </header>
+                    <sheet>
+                        <field name="state" invisible="1"/>
+                        <div class="ribbon ribbon-top-right" invisible="state != 'cashed'">
+                            <span style="background-color: #28a745;">已兌現</span>
+                        </div>
+                        <div class="oe_title">
+                            <h1>
+                                <field name="bill_number" string="票據號碼" />
+                            </h1>
+                        </div>
+                        <group>
+                            <group>
+                                <field name="issue_date" string="開票日"/>
+                                <field name="cash_date" string="兌現日" readonly="1"/>
+                                <field name="due_date" string="到期日"/>
+                                <field name="bill_type" string="票據種類" widget="radio" readonly="1"/>
+                                <field name="invoice_move" string="原單據名稱" readonly="1"/>
+                            </group>
+                            <group>
+                                <field name="issuer" string="開票人"/>
+                                <field name="bank_id" string="開票銀行"/>
+                                <field name="amount" string="開票金額" widget="monetary" options="{'currency_field': 'currency_id'}" force_save="1"/>
+                                <field name="currency_id" string="幣別" options="{'no_create': True}"/>
+                                <field name="journal_id" string="日記帳" widget="many2one" can_open="True"/>
+                                <field name="note" string="備註" placeholder="這邊可以打字"/>
+                            </group>
+                            <group>
+                                <field name="cancel_date" readonly="1" invisible="state != 'void'"/> 
+                                <field name="cancel_reason" readonly="1" invisible="state != 'void'"/>
+                            </group>
+                        </group>
+                        <notebook>
+                            <page string="日記帳細項">
+                                <field name="line_ids">
+                                    <tree editable="bottom">
+                                        <field name="account_id" options="{'no_create': True}"/>
+                                        <field name="name"/>
+                                        <field name="debit" sum="合計借方"/>
+                                        <field name="credit" sum="合計貸方"/>
+                                    </tree>
+                                </field>
+                            </page>
+                        </notebook>
+                    </sheet>
+                    <div class="oe_chatter">
+                        <field name="message_ids" widget="mail_thread"/>
+                        <field name="activity_ids" widget="mail_activity"/>
+                    </div>
+                </form>
+            </field>
+        </record>
+
+        <!-- 票據列表視圖 -->
+        <record id="view_tree_bill" model="ir.ui.view">
+            <field name="name">bill.tree</field>
+            <field name="model">account.bill</field>
+            <field name="arch" type="xml">
+                <tree string="票據">
+                    <field name="bill_number" string="票據號碼"/>
+                    <field name="issue_date" string="開票日"/>
+                    <field name="cash_date" string="兌現日"/>
+                    <field name="due_date" string="到期日"/>
+                    <field name="bill_type" widget="badge" 
+                            decoration-info="bill_type == 'receivable'"
+                            decoration-danger="bill_type == 'payable'"/>
+                    <field name="issuer" string="開票人"/>
+                    <field name="bank_id" string="開票銀行"/>
+                    <field name="amount" string="開票金額"/>
+                    <field name="currency_id" string="幣別"/>
+                    <field name="move_name"/>
+                    <field name="journal_id" string="日記帳"/>
+                    <field name="state" widget="badge" 
+                           decoration-info="state == 'draft'"
+                           decoration-success="state == 'confirmed'"
+                           decoration-primary="state == 'cashed'"
+                           decoration-danger="state == 'cancelled'"/>
+                    <field name="note" string="備註"/>
+                </tree>
+            </field>
+        </record>
+
+        <!-- 搜尋視圖 -->
+        <record id="view_search_bill" model="ir.ui.view">
+            <field name="name">bill.search</field>
+            <field name="model">account.bill</field>
+            <field name="arch" type="xml">
+                <search string="票據">
+                    <field name="bill_number" string="票據號碼"/>
+                    <field name="issue_date" string="開票日"/>
+                    <field name="cash_date" string="兌現日"/>
+                    <field name="due_date" string="到期日"/>
+                    <field name="amount" string="開票金額"/>
+                    <separator/>
+                    <filter name="only_confirmed" string="有效票據" 
+                            domain="[('state', 'not in', ('cashed', 'void', 'cancelled'))]"/>
+                    <filter string="草稿" name="draft" domain="[('state','=','confirmed')]"/>
+                    <filter string="已兌現" name="cashed" domain="[('state','=','cashed')]"/>
+                    <filter string="已註銷" name="void" domain="[('state','=','void')]"/>
+                    <filter string="已取消" name="cancelled" domain="[('state','=','cancelled')]"/>
+                    <group expand="0" string="分組依據">
+                        <filter string="開票銀行" name="bank" context="{'group_by':'bank_id'}"/>
+                        <filter string="狀態" name="state" context="{'group_by':'state'}"/>
+                        <filter string="到期日" name="due_date" context="{'group_by':'due_date'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <!-- 樞紐分析視圖 -->
+        <record id="view_pivot_bill" model="ir.ui.view">
+            <field name="name">bill.pivot</field>
+            <field name="model">account.bill</field>
+            <field name="arch" type="xml">
+                <pivot string="票據">
+                    <field name="amount" type="measure" string="開票金額"/>
+                    <field name="issue_date" type="row" string="開票日"/>
+                    <field name="cash_date" type="row" string="兌現日"/>
+                </pivot>
+            </field>
+        </record>
+
+        <!-- 可視化圖表視圖 -->
+        <record id="view_graph_bill" model="ir.ui.view">
+            <field name="name">bill.graph</field>
+            <field name="model">account.bill</field>
+            <field name="arch" type="xml">
+                <graph string="票據" type="bar">
+                    <field name="amount" type="measure" string="開票金額"/>
+                    <field name="issue_date" type="row" string="開票日"/>
+                </graph>
+            </field>
+        </record>
+
+        <!-- 動作定義 -->
+        <record id="action_bill" model="ir.actions.act_window">
+            <field name="name">票據</field>
+            <field name="res_model">account.bill</field>
+            <field name="view_mode">tree,form,pivot,graph</field>
+        </record>
+
+        <!-- 菜單項 -->
+        <!-- <menuitem id="menu_account_bill" 
+                  name="票據" 
+                  parent="account.menu_finance_entries" 
+                  sequence="0" 
+                  action="action_bill"/> -->
+        
+        <!-- Add to Customer Payment Menu -->
+        <menuitem id="menu_account_bill_customer" 
+                  name="票據" 
+                  parent="account.menu_finance_receivables" 
+                  sequence="19" 
+                  action="action_bill"
+                  groups="account.group_account_user,account.group_account_manager"/>
+                  
+
+        <menuitem id="menu_account_bill_supplier" 
+                  name="票據" 
+                  parent="account.menu_finance_payables" 
+                  sequence="19" 
+                  action="action_bill"
+                  groups="account.group_account_user,account.group_account_manager"/>
+    </data>
+</odoo>

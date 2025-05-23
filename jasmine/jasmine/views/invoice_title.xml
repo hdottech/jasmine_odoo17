@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_invoice_title_form" model="ir.ui.view">
+        <field name="name">invoice.title.form</field>
+        <field name="model">invoice.title</field>
+        <field name="arch" type="xml">
+            <form string="發票抬頭">
+                <!-- <header>
+                    <button name="toggle_active_status" string="切換啟用狀態" type="object" class="oe_highlight"/>
+                </header> -->
+                <sheet>
+                    <group>
+                        <group string="發票抬頭資訊">
+                            <field name="name"/>
+                            <field name="seller_tax_id" placeholder="請輸入8位數統一編號"/>
+                            <field name="seller_name"/>
+                            <field name="seller_address"/>
+                            <field name="seller_phone"/>
+                            <!-- <field name="active"/>
+                            <field name="is_active"/>
+                            <field name="is_used" readonly="1"/> -->
+                        </group>
+                        <!-- <group string="賣方資訊">
+                            <field name="seller_tax_id" placeholder="請輸入8位數統一編號"/>
+                            <field name="seller_name"/>
+                            <field name="seller_address"/>
+                            <field name="seller_phone"/>
+                        </group> -->
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_invoice_title_tree" model="ir.ui.view">
+        <field name="name">invoice.title.tree</field>
+        <field name="model">invoice.title</field>
+        <field name="arch" type="xml">
+            <tree string="發票抬頭">
+                <field name="name"/>
+                <field name="seller_tax_id"/>
+                <field name="seller_name"/>
+                <field name="seller_phone"/>
+                <!-- <field name="is_active"/> -->
+                <!-- <field name="active"/> -->
+            </tree>
+        </field>
+    </record>
+    <record id="action_invoice_title" model="ir.actions.act_window">
+        <field name="name">發票抬頭管理</field>
+        <field name="res_model">invoice.title</field>
+        <field name="view_mode">tree,form</field>
+        <!-- <field name="search_view_id" ref="view_invoice_title_search"/> -->
+        <field name="context">{'search_default_active': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                建立第一個發票抬頭
+            </p>
+        </field>
+    </record>
+</odoo>
