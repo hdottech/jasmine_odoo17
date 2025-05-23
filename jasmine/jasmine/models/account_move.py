@@ -361,11 +361,25 @@ class AccountMove(models.Model):
                 record.left_qr_image = False
                 record.right_qr_image = False
 
+    
     def action_generate_einvoice_number(self):
         """手動生成電子發票號碼 - 使用選擇的發票抬頭關聯的字軌"""
         self.ensure_one()
+        
+        # 檢查發票狀態 - 必須是已過帳狀態
+        if self.state != 'posted':
+            raise ValidationError('發票必須先過帳才能產生發票號碼')
+        
+        # 檢查是否有發票明細行
+        invoice_lines = self.invoice_line_ids.filtered(lambda l: l.display_type not in ('line_section', 'line_note'))
+        if not invoice_lines:
+            raise ValidationError('應收憑單表身沒有發票資料之前不可以產生發票號碼')
+        
+        # 檢查付款方式
         if not (self.is_cash_payment or self.is_credit_payment):
             raise ValidationError('請先選擇付款方式')
+            
+        # 檢查是否已有發票號碼
         if self.einvoice_number:
             raise ValidationError('此發票已有發票號碼')
 
