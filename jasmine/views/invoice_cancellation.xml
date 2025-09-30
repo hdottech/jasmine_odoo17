@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- 作廢單表單視圖 -->
+    <record id="view_invoice_cancellation_form" model="ir.ui.view">
+        <field name="name">invoice.cancellation.form</field>
+        <field name="model">invoice.cancellation</field>
+        <field name="arch" type="xml">
+            <form string="發票作廢">
+                <header>
+                    <button name="action_confirm" 
+                            type="object" 
+                            string="確認作廢" 
+                            class="btn-primary"
+                            invisible="state != 'draft'"
+                            confirm="確定要作廢此發票嗎？作廢後將自動上傳到汎宇系統。"/>
+                    
+                    <button name="action_cancel" 
+                            type="object" 
+                            string="取消" 
+                            class="btn-secondary"
+                            invisible="state != 'draft'"/>
+                    
+                    <field name="state" widget="statusbar" statusbar_visible="draft,done,cancel"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group string="作廢單資訊">
+                            <field name="name" readonly="1"/>
+                            <field name="cancellation_date"/>
+                            <field name="state" invisible="1"/>
+                        </group>
+                        <group string="發票資訊">
+                            <field name="invoice_id" readonly="state != 'draft'" 
+                                   domain="[('operation_type', 'not in', ['REJ', 'CAN', 'CAN_ALW'])]"/>
+                            <field name="invoice_number" readonly="1"/>
+                            <field name="invoice_date" readonly="1"/>
+                        </group>
+                    </group>
+                    
+                    <group>
+                        <group string="作廢原因">
+                            <field name="cancellation_reason" required="1" readonly="state != 'draft'"/>
+                            <field name="reason_detail" required="1" readonly="state != 'draft'" 
+                                   placeholder="請詳細說明作廢原因..."/>
+                        </group>
+                        <group string="汎宇上傳狀態" invisible="fanyuu_upload_status == 'pending'">
+                            <field name="fanyuu_upload_status" readonly="1"/>
+                            <field name="fanyuu_upload_time" readonly="1"/>
+                            <field name="fanyuu_upload_message" readonly="1" nolabel="1"
+                                   widget="text" placeholder="汎宇回應訊息"/>
+                        </group>
+                    </group>
+                    
+                    <!-- 警告訊息 -->
+                    <div class="alert alert-warning" invisible="state != 'draft'">
+                        <strong>注意：</strong>發票作廢後將無法復原，且會自動上傳到汎宇系統。請確認作廢原因無誤後再點擊「確認作廢」。
+                    </div>
+                    
+                    <!-- 成功訊息 -->
+                    <div class="alert alert-success" invisible="state != 'done' or fanyuu_upload_status != 'success'">
+                        <strong>作廢成功：</strong>發票已成功作廢並上傳到汎宇系統。
+                    </div>
+                    
+                    <!-- 失敗訊息 -->
+                    <div class="alert alert-danger" invisible="state != 'done' or fanyuu_upload_status != 'failed'">
+                        <strong>上傳失敗：</strong>發票已作廢，但上傳到汎宇系統時發生錯誤。
+                    </div>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- 作廢單列表視圖 -->
+    <record id="view_invoice_cancellation_tree" model="ir.ui.view">
+        <field name="name">invoice.cancellation.tree</field>
+        <field name="model">invoice.cancellation</field>
+        <field name="arch" type="xml">
+            <tree string="發票作廢記錄" create="false">
+                <field name="name"/>
+                <field name="invoice_number"/>
+                <field name="invoice_date"/>
+                <field name="cancellation_date"/>
+                <field name="cancellation_reason"/>
+                <field name="state" 
+                       decoration-info="state == 'draft'" 
+                       decoration-success="state == 'done'" 
+                       decoration-muted="state == 'cancel'"/>
+                <field name="fanyuu_upload_status" 
+                       decoration-warning="fanyuu_upload_status == 'pending'"
+                       decoration-success="fanyuu_upload_status == 'success'"
+                       decoration-danger="fanyuu_upload_status == 'failed'"/>
+                <field name="fanyuu_upload_time"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- 搜尋視圖 -->
+    <record id="view_invoice_cancellation_search" model="ir.ui.view">
+        <field name="name">invoice.cancellation.search</field>
+        <field name="model">invoice.cancellation</field>
+        <field name="arch" type="xml">
+            <search string="作廢單搜尋">
+                <field name="name" string="作廢單號"/>
+                <field name="invoice_number" string="發票號碼"/>
+                <field name="cancellation_reason" string="作廢原因"/>
+                
+                <separator/>
+                
+                <filter string="草稿" name="draft" domain="[('state', '=', 'draft')]"/>
+                <filter string="已作廢" name="done" domain="[('state', '=', 'done')]"/>
+                <filter string="已取消" name="cancel" domain="[('state', '=', 'cancel')]"/>
+                
+                <separator/>
+                
+                <filter string="待上傳" name="upload_pending" domain="[('fanyuu_upload_status', '=', 'pending')]"/>
+                <filter string="上傳成功" name="upload_success" domain="[('fanyuu_upload_status', '=', 'success')]"/>
+                <filter string="上傳失敗" name="upload_failed" domain="[('fanyuu_upload_status', '=', 'failed')]"/>
+                
+                <separator/>
+                
+                <filter string="今日作廢" name="today" domain="[('cancellation_date', '>=', context_today())]"/>
+                <filter string="本月作廢" name="this_month" date="cancellation_date" default_period="this_month"/>
+                
+                <group expand="0" string="分組依據">
+                    <filter string="狀態" name="group_by_state" context="{'group_by':'state'}"/>
+                    <filter string="作廢原因" name="group_by_reason" context="{'group_by':'cancellation_reason'}"/>
+                    <filter string="上傳狀態" name="group_by_upload_status" context="{'group_by':'fanyuu_upload_status'}"/>
+                    <filter string="作廢日期" name="group_by_date" context="{'group_by':'cancellation_date:day'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- 動作定義 -->
+    <record id="action_invoice_cancellation" model="ir.actions.act_window">
+        <field name="name">發票作廢記錄</field>
+        <field name="res_model">invoice.cancellation</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_invoice_cancellation_search"/>
+        <field name="context">{'search_default_this_month': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                尚無發票作廢記錄
+            </p>
+            <p>
+                發票作廢記錄會在您從發票表單點擊「作廢」按鈕時自動創建。
+            </p>
+        </field>
+    </record>
+
+    <!-- 序號設定 -->
+    <record id="seq_invoice_cancellation" model="ir.sequence">
+        <field name="name">發票作廢單序號</field>
+        <field name="code">invoice.cancellation</field>
+        <field name="prefix">CAN</field>
+        <field name="suffix"></field>
+        <field name="padding">8</field>
+        <field name="number_next">1</field>
+        <field name="number_increment">1</field>
+    </record>
+</odoo>

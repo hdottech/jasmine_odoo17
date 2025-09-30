@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="view_move_form_inherit_bill" model="ir.ui.view">
+            <field name="name">account.move.form.inherit.bill</field>
+            <field name="model">account.move</field>
+            <field name="inherit_id" ref="account.view_move_form"/>
+            <field name="arch" type="xml">
+                <!-- 狀態欄位移到名稱上方 -->
+                <xpath expr="//div[hasclass('oe_title')]" position="before">
+                    <field name="has_bill_payment" invisible="1"/>
+                    <field name="bill_payment_state" widget="badge"
+                           decoration-success="bill_payment_state == 'paid'"
+                           decoration-warning="bill_payment_state == 'partial'"
+                           decoration-info="bill_payment_state == 'bill_pending'"
+                           decoration-danger="bill_payment_state == 'unpaid'"/>
+                </xpath>
+
+                <!-- 登記付款按鈕控制邏輯 -->
+                <xpath expr="//button[@name='action_register_payment']" position="attributes">
+                    <field name="invisible">state != 'posted' or payment_state in ('paid', 'in_payment') or bill_ids</field>
+                </xpath>
+                <!-- 添加票據分頁 -->
+                <xpath expr="//page[@id='other_tab']" position="before">
+                    <page string="票據" name="bills" invisible="not bill_ids">
+                        <field name="bill_ids" invisible="not move_type in ('out_invoice', 'in_invoice', 'out_refund', 'in_refund')">
+                            <tree string="票據">
+                                <field name="bill_number"/>
+                                <field name="issue_date"/>
+                                <field name="due_date"/>
+                                <field name="amount"/>
+                                <field name="bank_id"/>
+                                <field name="state" widget="badge"
+                                       decoration-info="state == 'confirmed'"
+                                       decoration-success="state == 'cashed'"
+                                       decoration-danger="state in ('void', 'cancelled')"/>
+                            </tree>
+                        </field>
+                    </page>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>

@@ -1,0 +1,317 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- 發票號碼 Tree View -->
+    <record id="view_invoice_track_tree" model="ir.ui.view">
+        <field name="name">invoice.track.tree</field>
+        <field name="model">invoice.track</field>
+        <field name="arch" type="xml">
+            <tree string="發票字軌" decoration-info="status=='unused'" decoration-success="status=='in_use'" decoration-muted="status=='used_up'">
+                <header>
+                    <button name="export_csv" string="匯出空白發票 CSV" type="object" class="oe_highlight"/>
+                </header>
+                <field name="invoice_title_id"/>
+                <field name="date_from"/>
+                <field name="date_to"/>
+                <field name="section_code"/>
+                <field name="number_from"/>
+                <field name="number_to"/>
+                <field name="last_used_number"/>
+                <field name="status" widget="badge" 
+                    decoration-info="status=='unused'" 
+                    decoration-success="status=='in_use'" 
+                    decoration-danger="status=='used_up'"/>
+                <field name="next_available_number"/>
+                <!-- 汎宇相關欄位 -->
+                <field name="use_fanyuu_numbering" widget="boolean_toggle"/>
+                <field name="fanyuu_sync_status" widget="badge" 
+                    decoration-success="fanyuu_sync_status=='synced'"
+                    decoration-danger="fanyuu_sync_status=='error'"
+                    decoration-info="fanyuu_sync_status=='not_sync'"
+                    optional="show"/>
+                <field name="last_fanyuu_number" optional="hide"/>
+                <!-- 移除不需要的號碼池欄位 -->
+                <field name="fanyuu_success_count" optional="hide"/>  
+                <field name="fanyuu_fail_count" optional="hide"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- 發票號碼 Form View -->
+    <record id="view_invoice_track_form" model="ir.ui.view">
+        <field name="name">invoice.track.form</field>
+        <field name="model">invoice.track</field>
+        <field name="arch" type="xml">
+            <form string="發票號碼追蹤">
+                <header>
+                    <!-- 汎宇相關按鈕 -->
+                    <button name="action_get_system_time" 
+                            string="取得系統時間(Y01)" 
+                            type="object" 
+                            class="btn-info"
+                            invisible="not use_fanyuu_numbering"
+                            help="查詢汎宇伺服器系統時間"/>
+                    
+                    <!-- C01 下期字軌查詢 -->
+                    <button name="action_get_next_period_track" 
+                            string="下期字軌(C01)" 
+                            type="object" 
+                            class="btn-warning"
+                            invisible="not use_fanyuu_numbering"
+                            help="查詢下期發票字軌資訊"/>
+                            
+                    <button name="action_reset_fanyuu_status" 
+                            string="重置汎宇狀態" 
+                            type="object" 
+                            class="btn-link"
+                            invisible="not use_fanyuu_numbering"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group string="基本資訊">
+                            <field name="invoice_title_id" options="{'no_create': True, 'no_create_edit': True}"/>
+                            <field name="section_code"/>
+                            <field name="number_from"/>
+                            <field name="number_to"/>
+                        </group>
+                        <group string="發票號碼資訊">
+                            <field name="date_from"/>
+                            <field name="date_to"/>
+                            <field name="invoice_period"/>
+                            <field name="status" widget="radio"/>
+                            <field name="last_used_number" readonly="1"/>
+                            <field name="next_available_number" readonly="1"/>
+                        </group>
+                    </group>
+                    
+                    <!-- 汎宇整合設定 -->
+                    <group string="汎宇整合設定" invisible="not use_fanyuu_numbering">
+                        <group>
+                            <field name="use_fanyuu_numbering"/>
+                            <field name="fanyuu_sync_status" readonly="1" 
+                                widget="badge" 
+                                decoration-success="fanyuu_sync_status=='synced'"
+                                decoration-danger="fanyuu_sync_status=='error'"
+                                decoration-info="fanyuu_sync_status=='not_sync'"/>
+                            <field name="last_fanyuu_number" readonly="1"/>
+                            <field name="last_fanyuu_request_time" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="fanyuu_success_count" readonly="1"/>
+                            <field name="fanyuu_fail_count" readonly="1"/>
+                            <field name="fanyuu_error_message" readonly="1" 
+                                invisible="not fanyuu_error_message"
+                                widget="text"/>
+                        </group>
+                    </group>
+                    <!-- 號碼池狀態顯示 -->
+                    <group string="號碼池狀態" invisible="not use_fanyuu_numbering">
+                        <group>
+                            <field name="fanyuu_pool_size" readonly="1" string="池大小"/>
+                            <field name="fanyuu_used_count" readonly="1" string="已使用"/>
+                            <field name="fanyuu_remaining_count" readonly="1" string="剩餘"/>
+                        </group>
+                        <group>
+                            <field name="fanyuu_usage_percentage" readonly="1" string="使用率%" widget="percentage"/>
+                            <field name="fanyuu_pool_header" readonly="1" string="池字軌"/>
+                            <field name="fanyuu_pool_created_at" readonly="1" string="池建立時間"/>
+                        </group>
+                    </group>
+                    
+                    <!-- 汎宇功能說明 -->
+                    <div class="alert alert-info" invisible="not use_fanyuu_numbering">
+                        <strong>🚀 汎宇POS API功能說明：</strong>
+                        <ul>
+                            <li><strong>Y01 - 系統時間：</strong>取得汎宇伺服器當前時間，確保時間同步</li>
+                            <li><strong>A01 - 當期字軌：</strong>取得當前期間的發票字軌資訊（如：113年9-10月）</li>
+                            <li><strong>C01 - 下期字軌：</strong>預先取得下期發票字軌資訊（如：113年11-12月）</li>
+                            <li><strong>號碼池管理：</strong>自動管理發票號碼，提高開票效率</li>
+                        </ul>
+                        <div class="mt-2">
+                            <small class="text-muted">💡 建議：定期使用Y01檢查時間同步，用C01預先準備下期字軌</small>
+                        </div>
+                    </div>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- 發票號碼 Search View -->
+    <record id="view_invoice_track_search" model="ir.ui.view">
+        <field name="name">invoice.track.search</field>
+        <field name="model">invoice.track</field>
+        <field name="arch" type="xml">
+            <search string="發票字軌">
+                <field name="invoice_title_id"/>
+                <field name="section_code"/>
+                <field name="number_from"/>
+                <field name="number_to"/>
+                <field name="invoice_period"/>
+                <filter string="使用中" name="in_use" domain="[('status','=','in_use')]"/>
+                <filter string="未啟用" name="unused" domain="[('status','=','unused')]"/>
+                <filter string="已用畢" name="used_up" domain="[('status','=','used_up')]"/>
+                <!-- 汎宇相關過濾器 -->
+                <separator/>
+                <!-- <filter string="汎宇取號" name="fanyuu_numbering" domain="[('use_fanyuu_numbering','=',True)]"/>
+                <filter string="本地取號" name="local_numbering" domain="[('use_fanyuu_numbering','=',False)]"/> -->
+                <filter string="汎宇同步成功" name="fanyuu_synced" domain="[('fanyuu_sync_status','=','synced')]"/>
+                <filter string="汎宇同步失敗" name="fanyuu_error" domain="[('fanyuu_sync_status','=','error')]"/>
+                <group expand="0" string="Group By">
+                    <filter string="發票抬頭" name="group_by_title" context="{'group_by':'invoice_title_id'}"/>
+                    <filter string="發票週期" name="group_by_period" context="{'group_by':'invoice_period'}"/>
+                    <filter string="使用狀態" name="group_by_status" context="{'group_by':'status'}"/>
+                    <!-- <filter string="取號方式" name="group_by_fanyuu" context="{'group_by':'use_fanyuu_numbering'}"/> -->
+                    <!-- <filter string="汎宇狀態" name="group_by_fanyuu_status" context="{'group_by':'fanyuu_sync_status'}"/> -->
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- 發票號碼Action -->
+    <record id="action_invoice_track" model="ir.actions.act_window">
+        <field name="name">發票字軌管理</field>
+        <field name="res_model">invoice.track</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_invoice_track_search"/>
+        <field name="context">{'search_default_in_use': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                建立第一個發票字軌
+            </p>
+            <p>
+                設定發票字軌後，可以選擇使用汎宇即時取號或本地取號模式。
+            </p>
+        </field>
+    </record>
+
+    <!-- 應收/付憑單 -->   
+    <record id="view_account_move_form_inherit" model="ir.ui.view">
+        <field name="name">account.move.form.inherit</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_move_form"/>
+        <field name="arch" type="xml">     
+            <field name="payment_reference" position="after">
+                <field name="invoice_information_id" invisible="1"/>
+                <field name="vendor_invoice_number" 
+                    invisible="move_type not in ('in_invoice', 'in_refund')"
+                    string="應付憑單發票號碼" placeholder="請點擊輸入帳單發票號碼"/>
+                <field name="einvoice_period" readonly="1"/>
+
+                <label for="einvoice_number" 
+                    invisible="move_type not in ('out_invoice', 'out_refund')"/>
+                <div class="o_row" 
+                    invisible="move_type not in ('out_invoice', 'out_refund')">
+                    <field name="einvoice_number" readonly="1"/>
+                    <button name="action_generate_einvoice_number" 
+                            string="產生發票號碼" 
+                            type="object"
+                            class="btn-link text-success"
+                            style="margin-left: 8px; color: #28a745;"
+                            invisible="einvoice_number"/>
+                </div>
+                <field name="einvoice_date" 
+                    invisible="move_type not in ('out_invoice', 'out_refund')" 
+                    readonly="1"/>
+                <field name="einvoice_random_number" 
+                    invisible="move_type not in ('out_invoice', 'out_refund')" 
+                    readonly="1"/>
+            </field>
+
+            <!-- 其他欄位的修改 -->
+            <field name="invoice_user_id" position="attributes">
+                <attribute name="invisible">move_type not in ('out_invoice', 'out_refund')</attribute>
+            </field>
+            
+            <field name="invoice_user_id" position="after">
+                <field name="employee_user_id" 
+                    invisible="move_type not in ('out_invoice', 'out_refund')"/>
+            </field>
+
+            <xpath expr="//field[@name='partner_id']" position="after">
+                <field name="partner_vat_number" 
+                    string='統一編號' 
+                    readonly="1" 
+                    invisible="move_type not in ('out_invoice', 'out_refund')"/>
+            </xpath>
+
+            <xpath expr="//group[@id='header_left_group']" position="inside">
+                <field name="is_cash_payment" 
+                    invisible="move_type not in ('out_invoice', 'out_refund')"/>
+                <field name="is_credit_payment" 
+                    invisible="move_type not in ('out_invoice', 'out_refund')"/>
+                <field name="invoice_title_id" 
+                    invisible="move_type not in ('out_invoice', 'out_refund')"
+                    options="{'no_create': True, 'no_open': True}"
+                    domain="[('active', '=', True)]"
+                    placeholder="請選擇發票抬頭"
+                    required="move_type in ('out_invoice', 'out_refund')"/>
+                <field name="fiscal_position_id"/>
+                <field name="payment_cash" invisible="1"/>
+                <field name="payment_credit" invisible="1"/>
+            </xpath>
+
+
+            <xpath expr="//group[@name='sale_info_group']" position="inside">
+                <field name="einvoice_seller_id" 
+                    readonly="1" 
+                    invisible="move_type not in ('out_invoice', 'out_refund')"/>
+                <field name="einvoice_buyer_id" 
+                    readonly="1" 
+                    invisible="move_type not in ('out_invoice', 'out_refund')"/>
+            </xpath>
+            
+            <!-- 添加查看電子發票資訊按鈕 -->
+            <xpath expr="//div[hasclass('oe_button_box')]" position="inside">
+                <button name="action_view_invoice_information" type="object" 
+                        class="oe_stat_button" icon="fa-file-text-o"
+                        invisible="not einvoice_number or move_type not in ('out_invoice', 'out_refund') or not invoice_information_id">
+                    <div class="o_field_widget o_stat_info">
+                        <span class="o_stat_text">電子發票資訊</span>
+                    </div>
+                </button>
+            </xpath>    
+        </field>
+    </record>
+
+    <!-- 其他保持不變的記錄... -->
+    <record id="action_sync_all_einvoices" model="ir.actions.server">
+        <field name="name">同步到電子發票資訊</field>
+        <field name="model_id" ref="account.model_account_move"/>
+        <field name="binding_model_id" ref="account.model_account_move"/>
+        <field name="binding_view_types">list</field>
+        <field name="state">code</field>
+        <field name="code">action = model.sync_all_einvoices()</field>
+    </record>
+
+    <record id="view_account_invoice_report_search_inherit" model="ir.ui.view">
+        <field name="name">account.invoice.report.search.inherit</field>
+        <field name="model">account.invoice.report</field>
+        <field name="inherit_id" ref="account.view_account_invoice_report_search"/>
+        <field name="arch" type="xml">
+            <field name="product_id" position="after">
+                <field name="einvoice_number" string="發票號碼"/>
+            </field>
+            <filter name="category_product" position="after">
+                <filter string="發票號碼" name="group_by_einvoice" context="{'group_by':'einvoice_number'}"/>
+            </filter>
+        </field>
+    </record>
+
+    <record id="account_invoice_report_view_tree_inherit" model="ir.ui.view">
+        <field name="name">account.invoice.report.view.tree.inherit</field>
+        <field name="model">account.invoice.report</field>
+        <field name="inherit_id" ref="account.account_invoice_report_view_tree"/>
+        <field name="arch" type="xml">
+            <field name="invoice_date" position="after">
+                <field name="einvoice_number" string="發票號碼" optional="show"/>
+            </field>
+        </field>
+    </record>
+    
+    <record id="action_migrate_invoice_track_status" model="ir.actions.server">
+        <field name="name">遷移發票字軌狀態</field>
+        <field name="model_id" ref="model_invoice_track"/>
+        <field name="binding_model_id" ref="model_invoice_track"/>
+        <field name="state">code</field>
+        <field name="code">action = records.migrate_invoice_track_status()</field>
+    </record>
+</odoo>

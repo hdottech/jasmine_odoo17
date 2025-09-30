@@ -1,0 +1,251 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Form View -->
+    <record id="view_invoice_information_form" model="ir.ui.view">
+        <field name="name">invoice.information.form</field>
+        <field name="model">invoice.information</field>
+        <field name="arch" type="xml">
+            <form string="電子發票資訊" create="false" edit="false" delete="false">
+                 <header>                   
+                    <!-- 銷貨退回按鈕 - 只在發票未被處理時顯示 -->
+                    <!-- <button name="action_create_sales_return" 
+                            type="object" 
+                            string="銷貨退回" 
+                            class="btn-secondary" 
+                            invisible="operation_type != ''"/>
+                     -->
+                    <!-- 進貨退出按鈕 - 只在發票未被處理時顯示 -->
+                    <!-- <button name="action_create_purchase_return" 
+                            type="object" 
+                            string="進貨退出" 
+                            class="btn-secondary" 
+                            invisible="operation_type != ''"/> -->
+                    
+                    <!-- 更正按鈕 - 只在發票未被處理時顯示 -->
+                    <!-- <button name="action_create_correction" 
+                            type="object" 
+                            string="更正" 
+                            class="btn-secondary" 
+                            invisible="operation_type != ''"/> -->
+                    
+                    <!-- 作廢按鈕 - 對所有狀態都顯示，但已作廢或退回的發票除外 -->
+                    <button name="action_create_cancellation" 
+                            type="object" 
+                            string="作廢" 
+                            class="btn-danger" 
+                            invisible="operation_type in ('CAN', 'REJ')"/>
+                    
+                    <!-- 顯示狀態 - 使用operation_type -->
+                    <!-- <field name="operation_type" widget="statusbar" statusbar_visible=",REJ,CAN,CRE_ALW,CRE"/> -->
+                </header>
+                <sheet>
+                    <group>
+                        <group string="發票頭資訊 (H)">
+                            <field name="seller_tax_id" readonly="1"/>
+                            <field name="seller_name" readonly="1"/>
+                            <field name="seller_address" readonly="1"/>
+                            <field name="seller_phone" readonly="1"/>
+                            <field name="operation_type" readonly="1"/>
+                        </group>
+                        <group string="發票主資訊 (M)">
+                            <field name="invoice_track_id" readonly="1" invisible="1"/>
+                            <field name="invoice_number" readonly="1"/>
+                            <field name="invoice_date" readonly="1"/>
+                            <field name="invoice_type" readonly="1"/>
+                            <field name="buyer_tax_id" readonly="1"/>
+                            <field name="buyer_name" readonly="1"/>
+                            <field name="buyer_address" readonly="1"/>
+                            <field name="order_id" readonly="1"/>
+                            <field name="donate_mark" readonly="1"/>
+                            <field name="print_mark" readonly="1"/>
+                            <field name="npoban" readonly="1"/>
+                            <field name="notify_email" readonly="1"/>
+                            <field name="unit_code" readonly="1"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group string="金額與稅額資訊">
+                            <field name="tax_type" readonly="1"/>
+                            <field name="tax_rate" readonly="1"/>
+                            <field name="sales_amount" readonly="1"/>
+                            <field name="freetax_sales_amount" readonly="1"/>
+                            <field name="zerotax_sales_amount" readonly="1"/>
+                            <field name="tax_amount" readonly="1"/>
+                            <field name="total_amount" readonly="1"/>
+                        </group>
+                        <group string="通關與零稅率資訊">
+                            <field name="customs_clearance" readonly="1"/>
+                            <field name="zero_tax_mark" readonly="1"/>
+                            <field name="zero_tax_reason" readonly="1"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group string="其他發票資訊">
+                            <field name="related_number" readonly="1"/>
+                            <field name="buyer_customer_number" readonly="1"/>
+                            <field name="business_role" readonly="1"/>
+                            <field name="combined_mark" readonly="1"/>
+                        </group>
+                        <group string="幣別與匯率資訊">
+                            <field name="exchange_rate" readonly="1"/>
+                            <field name="currency" readonly="1"/>
+                            <field name="remark" readonly="1"/>
+                        </group>
+                    </group>
+                    <!-- 貸記單資訊 -->
+                    <group string="關聯貸記單資訊" invisible="not has_credit_note">
+                        <field name="has_credit_note" invisible="1"/>
+                        <label for="credit_note_ids" string="關聯貸記單"/>
+                        <div>
+                            <field name="credit_note_ids" readonly="1" nolabel="1">
+                                <tree create="false" edit="false" delete="false">
+                                    <field name="name"/>
+                                    <field name="invoice_date"/>
+                                    <field name="amount_total"/>
+                                    <field name="state"/>
+                                </tree>
+                            </field>
+                        </div>
+                    </group>
+                    <notebook>
+                        <page string="發票明細行 (D)">
+                            <field name="invoice_line_ids" readonly="1">
+                                <tree create="false" edit="false" delete="false">
+                                    <field name="product_name"/>
+                                    <field name="quantity"/>
+                                    <field name="unit_price"/>
+                                    <field name="line_amount"/>
+                                    <field name="line_remark"/>
+                                    <field name="unit"/>
+                                    <!-- <field name="line_related_number"/> -->
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- Tree View -->
+    <record id="view_invoice_information_tree" model="ir.ui.view">
+        <field name="name">invoice.information.tree</field>
+        <field name="model">invoice.information</field>
+        <field name="arch" type="xml">
+            <tree string="電子發票資訊" export_xlsx="1" create="false" edit="false" delete="false">
+                <header>
+                    <button name="action_export_csv" string="匯出 CSV" type="object" class="oe_highlight"/>
+                </header>
+                <field name="invoice_number"/>
+                <field name="invoice_date"/>
+                <field name="seller_name"/>
+                <field name="buyer_name"/>
+                <field name="buyer_tax_id"/>
+                <field name="invoice_type"/>
+                <field name="tax_type"/>
+                <field name="sales_amount" sum="銷售額合計"/>
+                <field name="tax_amount" sum="稅額合計"/>
+                <field name="total_amount" sum="總計金額"/>
+                <field name="currency"/>
+                <field name="operation_type" 
+                        decoration-info="operation_type == ''" 
+                        decoration-danger="operation_type == 'CAN'" 
+                        decoration-warning="operation_type == 'REJ'" 
+                        decoration-success="operation_type == 'CRE_ALW'"
+                        decoration-primary="operation_type == 'CRE'"/>
+            </tree>
+        </field>
+    </record>
+    <!-- Search View -->
+    <record id="view_invoice_information_search" model="ir.ui.view">
+        <field name="name">invoice.information.search</field>
+        <field name="model">invoice.information</field>
+        <field name="arch" type="xml">
+            <search string="電子發票搜尋">
+                <!-- 基本搜尋欄位 -->
+                <field name="invoice_number" string="發票號碼"/>
+                <field name="seller_name" string="賣方公司名稱"/>
+                <field name="seller_tax_id" string="賣方統一編號"/>
+                <field name="buyer_name" string="買方公司名稱"/>
+                <field name="buyer_tax_id" string="買方統一編號"/>
+                <field name="total_amount" string="總計金額"/>
+                
+                <separator/>
+                
+                <!-- 日期過濾器 -->
+                <filter string="今日開立" name="today" domain="[('invoice_date', '=', context_today())]"/>
+                <filter string="本月開立" name="this_month" date="invoice_date" default_period="this_month"/>
+                <filter string="上月開立" name="last_month" date="invoice_date" default_period="last_month"/>
+                
+                <separator/>
+                
+                <!-- 課稅別過濾器 -->
+                <filter string="應稅" name="tax_type_1" domain="[('tax_type', '=', '1')]"/>
+                <filter string="零稅率" name="tax_type_2" domain="[('tax_type', '=', '2')]"/>
+                <filter string="免稅" name="tax_type_3" domain="[('tax_type', '=', '3')]"/>
+                <filter string="應稅(特種)" name="tax_type_4" domain="[('tax_type', '=', '4')]"/>
+                
+                <separator/>
+                
+                <!-- 發票類別過濾器 -->
+                <filter string="一般稅額" name="invoice_type_07" domain="[('invoice_type', '=', '07')]"/>
+                <filter string="特種稅額" name="invoice_type_08" domain="[('invoice_type', '=', '08')]"/>
+                
+                <separator/>
+                
+                <!-- 發票作業類別過濾器 -->
+                <filter string="開立發票" name="operation_type_empty" domain="[('operation_type', '=', '')]"/>
+                <!-- <filter string="退回發票" name="operation_type_rej" domain="[('operation_type', '=', 'REJ')]"/> -->
+                <filter string="作廢發票" name="operation_type_can" domain="[('operation_type', '=', 'CAN')]"/>
+                <filter string="開立折讓" name="operation_type_cre_alw" domain="[('operation_type', '=', 'CRE_ALW')]"/>
+                <!-- <filter string="作廢折讓" name="operation_type_can_alw" domain="[('operation_type', '=', 'CAN_ALW')]"/> -->
+                
+                <separator/>
+                
+                <!-- 幣別過濾器 -->
+                <filter string="新台幣" name="currency_twd" domain="[('currency', '=', 'TWD')]"/>
+                <filter string="美金" name="currency_usd" domain="[('currency', '=', 'USD')]"/>
+                
+                <!-- 分組功能 -->
+                <group expand="0" string="分組依據">
+                    <filter string="買方名稱" name="group_by_buyer" context="{'group_by':'buyer_name'}"/>
+                    <filter string="買方統一編號" name="group_by_buyer_tax_id" context="{'group_by':'buyer_tax_id'}"/>
+                    <filter string="賣方名稱" name="group_by_seller" context="{'group_by':'seller_name'}"/>
+                    <filter string="課稅別" name="group_by_tax_type" context="{'group_by':'tax_type'}"/>
+                    <filter string="發票類別" name="group_by_invoice_type" context="{'group_by':'invoice_type'}"/>
+                    <filter string="幣別" name="group_by_currency" context="{'group_by':'currency'}"/>
+                    <filter string="發票作業類別" name="group_by_operation_type" context="{'group_by':'operation_type'}"/>
+                    <separator/>
+                    <filter string="日期" name="group_by_day" context="{'group_by':'invoice_date:day'}"/>
+                    <filter string="週" name="group_by_week" context="{'group_by':'invoice_date:week'}"/>
+                    <filter string="月份" name="group_by_month" context="{'group_by':'invoice_date:month'}"/>
+                    <filter string="季度" name="group_by_quarter" context="{'group_by':'invoice_date:quarter'}"/>
+                    <filter string="年度" name="group_by_year" context="{'group_by':'invoice_date:year'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="action_invoice_information" model="ir.actions.act_window">
+        <field name="name">電子發票管理</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">invoice.information</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_invoice_information_search"/>
+        <field name="context">{'search_default_this_month': 1, 'create': False, 'edit': False, 'delete': False}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                電子發票資訊僅顯示，不可編輯
+            </p>
+            <p>
+                電子發票資訊會自動從應收憑單同步產生，不需手動創建。
+            </p>
+        </field>
+    </record>
+</odoo>

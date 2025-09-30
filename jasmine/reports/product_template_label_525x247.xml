@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- 新增 48 格標籤紙張格式 -->
+        <record id="paperformat_48_labels" model="report.paperformat">
+            <field name="name">48格標籤 52.5x24.7mm (4x12格)</field>
+            <field name="default" eval="False" />
+            <field name="format">custom</field>
+            <field name="page_height">297</field>
+            <field name="page_width">210</field>
+            <field name="orientation">Portrait</field>
+            <field name="margin_top">0</field>
+            <field name="margin_bottom">0</field>
+            <field name="margin_left">0</field>
+            <field name="margin_right">0</field>
+            <field name="header_line" eval="False" />
+            <field name="header_spacing">0</field>
+            <field name="dpi">96</field>
+        </record>
+        
+        <!-- 48格標籤報表 -->
+        <record id="report_product_template_label_48_grid" model="ir.actions.report">
+            <field name="name">產品標籤 (48格)</field>
+            <field name="model">product.product</field>
+            <field name="report_type">qweb-pdf</field>
+            <field name="report_name">jasmine.report_producttemplatelabel48grid</field>
+            <field name="report_file">jasmine.report_producttemplatelabel48grid</field>
+            <field name="paperformat_id" ref="jasmine.paperformat_48_labels"/>
+            <field name="print_report_name">'產品標籤48格 - %s' % object.name</field>
+            <field name="binding_model_id" ref="product.model_product_product"/>
+            <field name="binding_type">report</field>
+        </record>
+
+        <!-- 48格標籤模板 -->
+        <template id="report_producttemplatelabel48grid">
+            <t t-call="web.basic_layout">
+                <style>
+                    .page {
+                        margin: 0 !important;
+                        padding: 0 !important;
+                        width: 210mm !important;
+                        height: 297mm !important;
+                    }
+                    @page {
+                        size: A4;
+                        margin: 0;
+                    }
+                </style>
+                <div class="page" style="margin:0; padding:0; width:210mm; height:297mm;">
+                    
+                    <!-- 將所有產品和條碼放入列表 -->
+                    <t t-set="all_products" t-value="[]"/>
+                    <t t-foreach="quantity.items()" t-as="product_data">
+                        <t t-set="product" t-value="product_data[0]"/>
+                        <t t-foreach="product_data[1]" t-as="barcode_and_qty">
+                            <t t-set="barcode" t-value="barcode_and_qty[0]"/>
+                            <t t-foreach="range(barcode_and_qty[1])" t-as="i">
+                                <t t-set="all_products" t-value="all_products + [(product, barcode)]"/>
+                            </t>
+                        </t>
+                    </t>
+                    
+                    <t t-set="total" t-value="len(all_products)"/>
+                    <t t-set="index" t-value="0"/>
+                    
+                    <!-- 48格表格 - 完全填滿A4 -->
+                    <table style="width:280mm; height:33mm; border-collapse:collapse; margin:0; padding:0; table-layout:fixed; position:absolute; top:0; left:0;right:0;">
+                        <t t-foreach="range(12)" t-as="row_idx">
+                            <tr style="height:33mm;">
+                                <t t-foreach="range(4)" t-as="col">
+                                    <td style="width:52.5mm; height:24.75mm; padding:2mm; vertical-align:top; border:1px solid black; box-sizing:border-box;">
+                                        <t t-if="index &lt; total">
+                                            <t t-set="current_product" t-value="all_products[index][0]"/>
+                                            <t t-set="current_barcode" t-value="all_products[index][1]"/>
+                                            
+                                            <!-- 產品名稱 - 移到格子中間 -->
+                                            <div style="text-align:center; font-size:15px; font-weight:bold; margin-top:4mm; margin-bottom:2mm; line-height:1.1;">
+                                                <t t-esc="current_product.display_name"/>
+                                            </div>
+                                            
+                                            <!-- 條碼和價格區域 -->
+                                            <t t-if="current_barcode">
+                                                <div style="margin-top:3mm;">
+                                                    <!-- 條碼 - 靠左 -->
+                                                    <div style="float:left;">
+                                                        <div style="margin-bottom:1mm;">
+                                                            <div t-out="current_barcode" t-options="{'widget': 'barcode', 'symbology': 'auto', 'img_style': 'width:45mm;height:10mm;'}"/>
+                                                            <div style="font-size:12px ;text-align:center;">
+                                                                <t t-esc="current_barcode"/>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <!-- 價格 - 在條碼右邊 -->
+                                                    <div style="float:right;margin-right:8mm;margin-top:5mm;">
+                                                        <div style="font-size:12px; font-weight:bold;">
+                                                            $ <t t-esc="int(current_product.list_price) if current_product.list_price else 0"/>
+                                                        </div>
+                                                    </div>
+                                                    <div style="clear:both;"></div>
+                                                </div>
+                                            </t>
+                                            
+                                            <t t-set="index" t-value="index + 1"/>
+                                        </t>
+                                    </td>
+                                </t>
+                            </tr>
+                        </t>
+                    </table>
+                </div>
+            </t>
+        </template>
+    </data>
+</odoo>

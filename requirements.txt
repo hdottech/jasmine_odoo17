@@ -1,0 +1,4 @@
+barcode
+Pillow
+python-barcode
+qrcode

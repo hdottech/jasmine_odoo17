@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- 系統參數設定 POS JSON API 相關設定 -->
+        <record id="fanyuu_allow_local_fallback" model="ir.config_parameter">
+            <field name="key">fanyuu.allow_local_fallback</field>
+            <field name="value">false</field>
+        </record>
+        
+        <record id="fanyuu_pos_company_id" model="ir.config_parameter">
+            <field name="key">fanyuu.pos_company_id</field>
+            <field name="value">83293137</field>
+        </record>
+        
+        <record id="fanyuu_pos_id" model="ir.config_parameter">
+            <field name="key">fanyuu.pos_id</field>
+            <field name="value">1001</field>
+        </record>
+        
+        <record id="fanyuu_pos_channel_key" model="ir.config_parameter">
+            <field name="key">fanyuu.pos_channel_key</field>
+            <field name="value">dequX8NU7Wf9GzGmpsv9</field>
+        </record>
+        
+        <record id="fanyuu_pos_endpoint" model="ir.config_parameter">
+            <field name="key">fanyuu.pos_endpoint</field>
+            <field name="value">test</field>
+        </record>
+
+        <record id="fanyuu_auto_upload_invoice" model="ir.config_parameter">
+            <field name="key">fanyuu.auto_upload_invoice</field>
+            <field name="value">true</field>
+        </record>
+
+        <record id="fanyuu_error_strategy" model="ir.config_parameter">
+            <field name="key">fanyuu.error_strategy</field>
+            <field name="value">continue</field>
+        </record>
+
+        <record id="fanyuu_retry_count" model="ir.config_parameter">
+            <field name="key">fanyuu.retry_count</field>
+            <field name="value">3</field>
+        </record>
+
+        <record id="fanyuu_timeout" model="ir.config_parameter">
+            <field name="key">fanyuu.timeout</field>
+            <field name="value">30</field>
+        </record>
+
+        <!-- 統一的設定介面 - 只保留 POS JSON API 設定 -->
+        <record id="view_fanyuu_config_settings" model="ir.ui.view">
+            <field name="name">res.config.settings.view.form.inherit.fanyuu</field>
+            <field name="model">res.config.settings</field>
+            <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//form" position="inside">
+                    <div class="app_settings_block" groups="base.group_system" data-string="汎宇電子發票設定" data-key="fanyuu_einvoice_settings">
+                        <h2>電子發票設定</h2>
+                        
+                        <!-- 自動上傳設定 -->
+                        <div class="row mt16 o_settings_container">
+                            <div class="col-12 col-lg-6 o_setting_box">
+                                <div class="o_setting_left_pane">
+                                    <field name="fanyuu_auto_upload_invoice"/>
+                                </div>
+                                <div class="o_setting_right_pane">
+                                    <label for="fanyuu_auto_upload_invoice"/>
+                                    <div class="text-muted">
+                                        啟用後，發票開立時會自動上傳到汎宇系統
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- POS JSON API 設定 -->
+                        <div class="row mt32 o_settings_container">
+                            <div class="col-12">
+                                <h3>POS JSON API 設定</h3>
+                                <div class="text-muted mb16">POS機JSON格式API設定</div>
+                            </div>
+                            
+                            <div class="col-12 col-lg-6 o_setting_box">
+                                <div class="o_setting_right_pane">
+                                    <div class="content-group">
+                                        <div class="row o_form_field">
+                                            <div class="col-lg-4 o_light_label">POS 公司統編</div>
+                                            <div class="col-lg-8">
+                                                <field name="fanyuu_pos_company_id"/>
+                                            </div>
+                                        </div>
+                                        <div class="row mt8 o_form_field">
+                                            <div class="col-lg-4 o_light_label">POS ID</div>
+                                            <div class="col-lg-8">
+                                                <field name="fanyuu_pos_id"/>
+                                            </div>
+                                        </div>
+                                        <div class="row mt8 o_form_field">
+                                            <div class="col-lg-4 o_light_label">通道金鑰</div>
+                                            <div class="col-lg-8">
+                                                <field name="fanyuu_pos_channel_key" password="True"/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-12 col-lg-6 o_setting_box">
+                                <div class="o_setting_right_pane">
+                                    <div class="content-group">
+                                        <div class="row o_form_field">
+                                            <div class="col-lg-4 o_light_label">環境選擇</div>
+                                            <div class="col-lg-8">
+                                                <field name="fanyuu_pos_endpoint" widget="radio" options="{'horizontal': true}"/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 進階設定 -->
+                        <div class="row mt32 o_settings_container">
+                            <div class="col-12">
+                                <h3>進階設定</h3>
+                                <div class="text-muted mb16">錯誤處理和性能調整</div>
+                            </div>
+                            
+                            <div class="col-12 col-lg-6 o_setting_box">
+                                <div class="o_setting_right_pane">
+                                    <div class="content-group">
+                                        <div class="row o_form_field">
+                                            <div class="col-lg-4 o_light_label">錯誤處理策略</div>
+                                            <div class="col-lg-8">
+                                                <field name="fanyuu_error_strategy" widget="radio" options="{'horizontal': true}"/>
+                                            </div>
+                                        </div>
+                                        <div class="row mt8 o_form_field">
+                                            <div class="col-lg-4 o_light_label">重試次數</div>
+                                            <div class="col-lg-8">
+                                                <field name="fanyuu_retry_count"/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-12 col-lg-6 o_setting_box">
+                                <div class="o_setting_right_pane">
+                                    <div class="content-group">
+                                        <div class="row o_form_field">
+                                            <div class="col-lg-4 o_light_label">超時時間（秒）</div>
+                                            <div class="col-lg-8">
+                                                <field name="fanyuu_timeout"/>
+                                            </div>
+                                        </div>
+                                        <div class="row mt8 o_form_field">
+                                            <div class="col-lg-4 o_light_label">本地回退</div>
+                                            <div class="col-lg-8">
+                                                <field name="fanyuu_allow_local_fallback"/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 說明文字 -->
+                        <div class="row mt32">
+                            <div class="col-12">
+                                <div class="alert alert-info">
+                                    <h5>設定說明：</h5>
+                                    <ul>
+                                        <li><strong>POS JSON API</strong>：汎宇POS機JSON格式API，支援取號、開立、作廢、折讓等完整功能</li>
+                                        <li><strong>環境選擇</strong>：test=測試環境，prod=正式環境</li>
+                                        <li><strong>自動上傳</strong>：啟用後發票開立、作廢、折讓都會自動上傳到汎宇</li>
+                                        <li><strong>錯誤處理</strong>：中斷=上傳失敗時停止發票流程，繼續=記錄錯誤但不影響發票開立</li>
+                                        <li><strong>本地回退</strong>：當汎宇API不可用時，是否允許使用本地字軌取號</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>

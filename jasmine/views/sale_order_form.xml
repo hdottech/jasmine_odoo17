@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+        <record id="view_order_form_inherit" model="ir.ui.view">
+            <field name="name">sale.order.form.inherit</field>
+            <field name="model">sale.order</field>
+            <field name="inherit_id" ref="sale.view_order_form"/>
+            <field name="arch" type="xml">
+                <field name="user_id" position="attributes">
+                    <attribute name="invisible">1</attribute>
+                </field>
+                <field name="user_id" position="after">
+                    <field name="employee_user_id"/>
+                </field>
+                <xpath expr="//field[@name='partner_id']" position="after">
+                    <field name="partner_vat_number" readonly="1"/>
+                </xpath>
+                <xpath expr="//field[@name='order_line']/tree//field[@name='product_id']" position="before">
+                    <field name="sequence_number" readonly="1"/>
+                </xpath>
+            </field>
+        </record>
+        <record id="view_order_form_inherit_signature" model="ir.ui.view">
+            <field name="name">sale.order.form.inherit.signature</field>
+            <field name="model">sale.order</field>
+            <field name="inherit_id" ref="sale.view_order_form"/>
+            <field name="arch" type="xml">
+                <field name="signed_by" position="attributes">
+                    <attribute name="invisible">1</attribute>
+                </field>
+                <field name="signed_on" position="attributes">
+                    <attribute name="invisible">1</attribute>
+                </field>
+                <xpath expr="//page[@name='customer_signature']//field[@name='signature']" position="replace">
+                    <group>
+                        <field name="signature" widget="signature"  string="客戶簽名"/>
+                    </group>
+                </xpath>
+            </field>
+        </record>
+
+        <record id="view_sale_order_form_inherit_list_button" model="ir.ui.view">
+            <field name="name">sale.order.form.inherit.list.button</field>
+            <field name="model">sale.order</field>
+            <field name="inherit_id" ref="sale.view_order_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='order_line']/tree//control/create[@name='add_product_control']" position="after">
+                    <button name="action_open_sales_report" 
+                            string="銷售分析"
+                            type="object"
+                            class="px-4 btn-link"/>
+                </xpath>
+            </field>
+        </record>
+        <record id="view_sale_report_tree_priceunit" model="ir.ui.view">
+            <field name="name">sale.report.tree.priceunit</field>
+            <field name="model">sale.report</field>
+            <field name="arch" type="xml">
+                <tree string="銷售分析" create="0" delete="0" multi_edit="1">
+                    <header>
+                        <button name="add_to_current_order" 
+                                string="加入到訂單" 
+                                type="object"
+                                class="btn-primary"
+                                confirm="確定要將選取的項目加入到訂單中嗎？"/>
+                    </header>
+                    <field name="partner_id"/>
+                    <field name="product_id"/>
+                    <field name="product_uom_qty"/>
+                    <field name="price_unit"/>
+                    <field name="price_total"/>
+                </tree>
+            </field>
+        </record>
+        <!-- 批次動作：將勾選的 sale.report 加入目前這張訂單 -->
+       <record id="action_add_selected_sale_report_to_order" model="ir.actions.server">
+    <field name="name">加入到訂單</field>
+    <field name="state">code</field>
+    <field name="model_id" ref="sale.model_sale_report"/>
+    <!-- 移除 binding_model_id，改用手動調用 -->
+    <field name="code"><![CDATA[
+order_id = env.context.get('current_sale_order_id')
+if not order_id:
+    raise UserError("找不到目前訂單，請從訂單表單的「銷售分析」按鈕進入。")
+
+order = env['sale.order'].browse(order_id)
+if not order.exists():
+    raise UserError("目前訂單不存在或已被刪除。")
+
+# 從 context 取得選取的 sale.report IDs
+selected_ids = env.context.get('active_ids', [])
+if not selected_ids:
+    raise UserError("請先勾選要加入的項目。")
+
+reports = env['sale.report'].browse(selected_ids)
+if not reports:
+    raise UserError("請先勾選要加入的項目。")
+
+SOL = env['sale.order.line']
+added_count = 0
+
+for report in reports:
+    if not report.product_id:
+        continue
+        
+    product = report.product_id
+    qty = report.product_uom_qty or 1.0
+    price = report.price_unit or product.lst_price
+    
+    existing_line = SOL.search([
+        ('order_id', '=', order.id),
+        ('product_id', '=', product.id)
+    ], limit=1)
+    
+    if existing_line:
+        existing_line.write({
+            'product_uom_qty': existing_line.product_uom_qty + qty
+        })
+    else:
+        SOL.create({
+            'order_id': order.id,
+            'product_id': product.id,
+            'product_uom_qty': qty,
+            'product_uom': product.uom_id.id,
+            'price_unit': price,
+            'name': product.display_name,
+        })
+    added_count += 1
+
+if added_count > 0:
+    action = env.ref('sale.action_quotations_with_onboarding').read()[0]
+    action['res_id'] = order.id
+    action['views'] = [(env.ref('sale.view_order_form').id, 'form')]
+    result = action
+else:
+    raise UserError("沒有有效的項目可以加入。")
+    ]]></field>
+</record>
+
+        <!-- 收/交貨單 + sequence_number -->
+        <record id="view_picking_form_inherit" model="ir.ui.view">
+            <field name="name">stock.picking.form.inherit</field>
+            <field name="model">stock.picking</field>
+            <field name="inherit_id" ref="stock.view_picking_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='move_ids_without_package']/tree" position="attributes">
+                    <attribute name="editable">bottom</attribute>
+                    <attribute name="decoration-muted">scrapped == True</attribute>
+                    <attribute name="default_order">sequence, id</attribute>
+                </xpath>
+                
+                <xpath expr="//field[@name='move_ids_without_package']/tree//field[@name='product_id']" position="before">
+                    <field name="sequence" widget="handle"/>
+                    <field name="sequence_number" width="40" style="width:40px; margin-right:0px; padding-right:0px"/>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>

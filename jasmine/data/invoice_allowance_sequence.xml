@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <data noupdate="1">
+    <record id="seq_invoice_allowance" model="ir.sequence">
+      <field name="name">折讓單號碼</field>
+      <field name="code">invoice.allowance</field>
+      <field name="prefix">ALW-</field>
+      <field name="padding">6</field>
+      <field name="number_next">1</field>
+      <field name="number_increment">1</field>
+    </record>
+    <record id="sequence_invoice_return" model="ir.sequence">
+        <field name="name">退回單號碼</field>
+        <field name="code">invoice.return</field>
+        <field name="padding">6</field>
+        <field name="company_id" eval="False"/>
+    </record>
+    <record id="seq_invoice_cancellation" model="ir.sequence">
+        <field name="name">發票作廢序列</field>
+        <field name="code">invoice.cancellation</field>
+        <field name="prefix">CAN-</field>
+        <field name="padding">4</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
+    <record id="seq_invoice_correction" model="ir.sequence">
+        <field name="name">發票更正序列</field>
+        <field name="code">invoice.correction</field>
+        <field name="prefix">CORR-</field>
+        <field name="padding">4</field>
+        <field name="company_id" eval="False"/>
+    </record>
+  </data>
+</odoo>

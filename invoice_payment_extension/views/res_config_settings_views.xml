@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="res_config_settings_view_form_inherit_account_bill" model="ir.ui.view">
+            <field name="name">res.config.settings.view.form.inherit.account.bill</field>
+            <field name="model">res.config.settings</field>
+            <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+            <field name="arch" type="xml">
+                <form position="inside">
+                    <div class="app_settings_block" data-string="票據" data-key="invoice_payment_extension">
+                        <h2>票據設定</h2>
+                        <div class="row mt16 o_settings_container">
+                            <div class="col-12 col-lg-6 o_setting_box">
+                                <div class="o_setting_right_pane">
+                                    <span class="o_form_label">預設票據科目</span>
+                                    <div class="text-muted">
+                                        設定票據預設科目
+                                    </div>
+                                    <div class="content-group mt16">
+                                        <div class="row">
+                                            <label for="notes_receivable_account_id" string="預設應收票據科目" class="col-lg-3 o_light_label"/>
+                                            <field name="notes_receivable_account_id"/>
+                                        </div>
+                                        <div class="row mt16">
+                                            <label for="notes_payable_account_id" string="預設應付票據科目" class="col-lg-3 o_light_label"/>
+                                            <field name="notes_payable_account_id"/>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </field>
+        </record>
+    </data>
+</odoo>

@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="pos_style_receipt">
+        <t t-call="web.basic_layout">
+            <t t-foreach="docs" t-as="o">
+                <div class="page" style="font-family: 'Microsoft JhengHei', 'SimSun', sans-serif; padding: 3px 8px; width: 80mm; margin: auto; font-size: 14px;">
+                    
+                    <!-- 公司資訊區 -->
+                    <div style="text-align: center; margin-bottom: 5px; line-height: 1.1;">
+                        <div t-if="o.invoice_title_id and o.invoice_title_id.seller_name" 
+                             style="font-size: 28px; font-family: 細明體; margin: 1px 0; font-weight: bold;" 
+                             t-field="o.invoice_title_id.seller_name"/>
+                        <div style="font-size: 28px; font-family: 細明體; margin: 1px 0;">電子發票證明聯</div>
+                        <div style="font-size: 28px; font-family: 細明體; margin: 1px 0;" t-field="o.einvoice_period"/>
+                        <div style="font-size: 28px; font-family: 細明體; margin: 1px 0;" t-field="o.einvoice_number"/>
+                    </div>
+
+                    <!-- 發票基本資訊 -->
+                    <table style="width: 100%; border-collapse: collapse; font-size: 15px; font-family: 細明體; margin: 1px 0;">
+                        <tr>
+                            <td colspan="2">
+                                <span style="text-align: left;" t-field="o.einvoice_date" t-options='{"format": "yyyy-MM-dd HH:mm:ss"}'/>
+                                <span style="margin-left: 10px;text-align: right;">格式:<span t-field="o.invoice_format_code"/></span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="width: 50%;">隨機碼：<span t-field="o.einvoice_random_number"/></td>
+                            <td style="width: 50%; text-align: right;">總計：<span t-field="o.amount_total" t-options='{"widget": "float", "precision": 0}'/></td>
+                        </tr>
+                        <tr>
+                            <td style="width: 50%;">賣方：<span t-field="o.einvoice_seller_id"/></td>
+                            <td style="width: 50%; text-align: right;">買方：<span t-field="o.partner_vat_number"/></td>
+                        </tr>
+                    </table>
+                    <!-- 條碼區 -->
+                    <div style="text-align: center; margin: 3px 0;">
+                        <t t-if="o.fanyuu_barcode_image">
+                            <img t-att-src="'data:image/png;base64,' + o.fanyuu_barcode_image" 
+                                 style="width: 100%; height: 30px;"/>
+                        </t>
+                    </div>
+                    <!-- QR Code 區 -->
+                    <div style="text-align: center; margin: 0; padding: 0; line-height: 1;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <t t-if="o.fanyuu_qr_code_image">
+                                <img t-att-src="'data:image/png;base64,' + o.fanyuu_qr_code_image" 
+                                    style="width: 40%; height: auto; max-width: 100%;"/>
+                            </t>
+                            <t t-if="o.detail_qr_code_image">
+                                <img t-att-src="'data:image/png;base64,' + o.detail_qr_code_image" 
+                                    style="width: 40%; height: auto; max-width: 100%;"/>
+                            </t>
+                        </div>
+                    </div>
+                   
+                    
+                    <!-- 分隔線 -->
+                    <!-- <div style="border-bottom: 1px solid black; margin: 5px 0;"></div> -->
+                    
+                    <!-- 交易明細標題 -->
+                    <div style="text-align: center; font-size: 20px; font-weight: bold; margin: 2px 0; font-family: 細明體;">
+                        交易明細表
+                    </div>
+                    
+                    <!-- 交易資訊 -->
+                    <div style="font-size: 15px; font-family: 細明體; line-height: 1.2;">
+                        <div>單號：<span t-field="o.name"/></div>
+                        <div>發票號碼：<span t-field="o.einvoice_number"/></div>
+                        <div t-if="o.employee_user_id">員工：<span t-field="o.employee_user_id"/></div>
+                    </div>
+                    
+                    <!-- 分隔線 -->
+                    <!-- <div style="border-bottom: 1px solid black; margin: 3px 0;"></div> -->
+                    
+                    <!-- 商品明細 -->
+                    <table style="width: 100%; border-collapse: collapse;">
+                            <t t-foreach="o.invoice_line_ids" t-as="line">
+                                <tr>
+                                    <td style="text-align: left; padding: 1px;">
+                                        <span t-field="line.product_id.name"/>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="text-align: center; padding: 1px;">
+                                        <span t-field="line.quantity" t-options='{"widget": "float", "precision": 0}'/> x 
+                                        <span t-field="line.price_unit" t-options='{"widget": "float", "precision": 0}'/> 
+                                        <span style="margin-left: 10px;" t-field="line.price_subtotal" t-options='{"widget": "float", "precision": 0}'/>
+                                    </td>
+                                </tr>
+                            </t>
+                    </table>
+                    <!-- <div style="font-size: 12px; font-family: 細明體; line-height: 1.2;">
+                        <t t-foreach="o.invoice_line_ids.filtered(lambda l: l.display_type not in ('line_section', 'line_note'))" t-as="line">
+                            <div style="display: flex; justify-content: space-between; margin: 1px 0;">
+                                <span style="flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                    <span t-field="line.product_id.name"/>
+                                </span>
+                                <span style="flex: 0 0 auto; margin-left: 5px;">
+                                    <span t-field="line.quantity" t-options='{"widget": "float", "precision": 0}'/> x 
+                                    <span t-field="line.price_unit" t-options='{"widget": "float", "precision": 0}'/> = 
+                                    <span t-field="line.price_subtotal" t-options='{"widget": "float", "precision": 0}'/>
+                                </span>
+                            </div>
+                        </t>
+                    </div> -->
+                    
+                    <!-- 分隔線 -->
+                    <div style="border-bottom: 1px solid black; margin: 3px 0;"></div>
+
+                    <!-- 金額合計 -->
+                    <div style="font-size: 15px; font-family: 細明體; line-height: 1.2;">
+                        <div style="display: flex; justify-content: space-between; font-weight: bold;">
+                            <span>總計金額：</span>
+                            <span t-field="o.amount_total" t-options='{"widget": "float", "precision": 0}'/>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span>未稅金額：</span>
+                            <span t-field="o.amount_untaxed" t-options='{"widget": "float", "precision": 0}'/>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span>營業稅額：</span>
+                            <span t-field="o.amount_tax" t-options='{"widget": "float", "precision": 0}'/>
+                        </div>
+
+                        <div style="display: flex; justify-content: space-between;">
+                            <span>現金：</span>
+                            <span t-field="o.payment_cash" t-options='{"widget": "float", "precision": 0}'/>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span>信用卡：</span>
+                            <span t-field="o.payment_credit" t-options='{"widget": "float", "precision": 0}'/>
+                        </div>
+                    </div>
+                    
+                    <!-- 機器序號 -->
+                    <div style="font-size: 12px; margin-top: 5px; font-family: 細明體; text-align: center;">
+                        機器序號：001
+                    </div>
+                    
+                    <!-- 驗證碼（如果有） -->
+                    <div t-if="o.einvoice_certification_number" 
+                         style="font-size: 10px; font-family: 細明體; margin-top: 3px; text-align: center; word-break: break-all;">
+                        驗證碼：<span t-field="o.einvoice_certification_number"/>
+                    </div>
+                </div>
+            </t>
+        </t>
+    </template>
+    
+    <record id="action_report_einvoice" model="ir.actions.report">
+        <field name="name">電子發票列印</field>
+        <field name="model">account.move</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">jasmine.pos_style_receipt</field>
+        <field name="report_file">jasmine.pos_style_receipt</field>
+        <field name="print_report_name">'Receipt - %s' % object.name</field>
+        <field name="binding_model_id" ref="account.model_account_move"/>
+        <field name="binding_type">report</field>
+    </record>
+</odoo>

@@ -1,0 +1,269 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+  <!-- 列印動作：中一刀退貨單（綁定 stock.picking） -->
+  <record id="action_report_zhongyidao_return" model="ir.actions.report">
+    <field name="name">中一刀退貨單</field>
+    <field name="model">stock.picking</field>
+    <field name="report_type">qweb-pdf</field>
+    <field name="report_name">jasmine.report_zhongyidao_return</field>
+    <field name="report_file">jasmine.report_zhongyidao_return</field>
+    <field name="print_report_name">'中一刀退貨單 - %s' % object.name</field>
+    <field name="binding_model_id" ref="stock.model_stock_picking"/>
+    <field name="binding_type">report</field>
+  </record>
+
+  <!-- 模板：中一刀退貨單（版面與你提供的報價單一致） -->
+  <template id="report_zhongyidao_return">
+    <t t-call="web.html_container">
+      <t t-foreach="docs" t-as="doc">
+
+        <!-- 語系與來源單據（只取來源金額，不再計算） -->
+        <t t-set="lang" t-value="doc.partner_id.lang or 'zh_TW'"/>
+        <t t-set="o" t-value="doc.with_context(lang=lang)"/>
+        <!-- 來源單據：優先 sales -> purchases -> 從第一筆 move 反推 -->
+        <t t-set="src_order"
+           t-value="doc.sale_id
+                     or doc.purchase_id
+                     or (doc.move_ids_without_package and (doc.move_ids_without_package[0].sale_line_id and doc.move_ids_without_package[0].sale_line_id.order_id))
+                     or (doc.move_ids_without_package and (doc.move_ids_without_package[0].purchase_line_id and doc.move_ids_without_package[0].purchase_line_id.order_id))"/>
+
+        <!-- 分頁（每頁 10 行） -->
+        <t t-set="item_count" t-value="len(doc.move_ids_without_package)"/>
+        <t t-set="total_pages" t-value="(item_count + 9) // 10"/>
+        <t t-if="total_pages == 0"><t t-set="total_pages" t-value="1"/></t>
+
+        <t t-foreach="range(total_pages)" t-as="page">
+          <t t-set="start_idx" t-value="page * 10"/>
+          <t t-set="end_idx" t-value="min((page + 1) * 10, item_count)"/>
+          <t t-set="is_last_page" t-value="page == total_pages - 1"/>
+
+          <div class="article" style="page-break-after: always;">
+            <!-- 固定頁高，讓 bottom:0 真正貼紙張底 -->
+            <div class="page" style="font-family: 細明體; position: relative; height: calc(210mm - 14mm);">
+
+              <!-- 樣式（與報價單一致） -->
+              <style>
+                @page { size: 140mm 210mm; margin: 7mm; }
+                body, html { height: auto !important; }
+                .text-layer-wrapper, .textLayer { display: none !important; border: none !important; }
+                table, tr, td, th, thead, tbody, tfoot { border: none !important; }
+                .table { border-collapse: collapse !important; width: 100%; }
+                .order-row { height: 24px !important; line-height: 24px !important; }
+                .order-cell { padding: 0 !important; vertical-align: middle !important; }
+                .text-right { text-align: right; }
+              </style>
+
+              <!-- 頂部間距 -->
+              <div style="height: 2em;"></div>
+
+              <!-- 標題 -->
+              <div class="page-header">
+                <div class="text-center" style="margin-bottom: 24px;">
+                  <h1 style="font-size: 24px; letter-spacing: 1em;">退　貨　單</h1>
+                </div>
+
+                <!-- 基本資訊（五行，欄位同你檔案） -->
+                <table class="table" style="margin: 0;">
+                  <!-- 第一行：客戶代號 / 日期 / 單號 + 製單 -->
+                  <tr style="margin-top: -1em; position: relative; top: -1em;">
+                    <td style="width: 35%; padding: 1px 5px;">
+                      <div style="display: flex; align-items: center; height: 24px;">
+                        <span style="visibility: hidden;">公司編號：</span>
+                        <span t-esc="doc.partner_id and doc.partner_id.ref or ''"/>
+                      </div>
+                    </td>
+                    <td style="width: 35%; padding: 1px 5px; text-align: center;">
+                      <div style="display: flex; justify-content: center; height: 24px;">
+                        <span style="visibility: hidden;">年</span>
+                        <span style="position: absolute; margin-left: -8em;" t-esc="context_timestamp(doc.create_date or doc.scheduled_date or doc.date_done).strftime('%Y')"/>
+                        <span style="visibility: hidden;">月</span>
+                        <span style="position: absolute; margin-left: -3em;" t-esc="context_timestamp(doc.create_date or doc.scheduled_date or doc.date_done).strftime('%m')"/>
+                        <span style="visibility: hidden;">日</span>
+                        <span style="position: absolute; margin-left: 0em;" t-esc="context_timestamp(doc.create_date or doc.scheduled_date or doc.date_done).strftime('%d')"/>
+                      </div>
+                    </td>
+                    <td style="width: 30%; padding: 1px 5px; text-align: right;">
+                      <div style="display: flex; align-items: center; justify-content: flex-end; height: 24px;">
+                        <span t-esc="doc.name"/><span style="margin: 0 4px;"></span>
+                        製單: <span t-esc="doc.create_uid and doc.create_uid.name or ''"/>
+                      </div>
+                    </td>
+                  </tr>
+
+                  <!-- 第二行：客戶名稱 / 統一編號 -->
+                  <tr style="font-size: 15px; line-height: 16px;">
+                    <td colspan="2" style="padding: 1px 3px;">
+                      <span style="visibility: hidden;">客戶名稱：</span>
+                      <span style="display: inline-block; text-indent: 1em;">
+                        <span t-esc="doc.partner_id and doc.partner_id.name or ''"/>
+                      </span>
+                    </td>
+                    <td style="padding: 1px 3px;">
+                      <span style="visibility: hidden;">統一編號：</span>
+                      <span style="display: inline-block; text-indent: 1em;">
+                        <span t-esc="doc.partner_id and (doc.partner_id.vat or '')"/>
+                      </span>
+                    </td>
+                  </tr>
+
+                  <!-- 第三行：公司地址 / 發票號碼(留白) -->
+                  <tr style="font-size: 15px; line-height: 16px;">
+                    <td colspan="2" style="padding: 1px 3px;">
+                      <span style="visibility: hidden;">公司地址：</span>
+                      <span style="display: inline-block; text-indent: 1em;">
+                        <t t-if="doc.partner_id and doc.partner_id.street"><span t-esc="doc.partner_id.street"/> , </t>
+                        <t t-if="doc.partner_id and doc.partner_id.street2"><span t-esc="doc.partner_id.street2"/> , </t>
+                        <t t-if="doc.partner_id and doc.partner_id.city"><span t-esc="doc.partner_id.city"/> , </t>
+                        <t t-if="doc.partner_id and doc.partner_id.zip"><span t-esc="doc.partner_id.zip"/> , </t>
+                        <t t-if="doc.partner_id and doc.partner_id.state_id"><span t-esc="doc.partner_id.state_id.name"/> , </t>
+                        <t t-if="doc.partner_id and doc.partner_id.country_id"><span t-esc="doc.partner_id.country_id.name"/></t>
+                      </span>
+                    </td>
+                    <td style="padding: 1px 3px;">
+                      <span style="visibility: hidden;">發票號碼：</span>
+                      <span style="display: inline-block; text-indent: 1em;"></span>
+                    </td>
+                  </tr>
+
+                  <!-- 第四行：送貨地址（同地址） / 業務 -->
+                  <tr style="font-size: 15px; line-height: 16px;">
+                    <td colspan="2" style="padding: 1px 3px;">
+                      <span style="visibility: hidden;">送貨地址：</span>
+                      <span style="display: inline-block; text-indent: 1em;">
+                        <t t-if="doc.partner_id and doc.partner_id.street"><span t-esc="doc.partner_id.street"/> , </t>
+                        <t t-if="doc.partner_id and doc.partner_id.street2"><span t-esc="doc.partner_id.street2"/> , </t>
+                        <t t-if="doc.partner_id and doc.partner_id.city"><span t-esc="doc.partner_id.city"/> , </t>
+                        <t t-if="doc.partner_id and doc.partner_id.zip"><span t-esc="doc.partner_id.zip"/> , </t>
+                        <t t-if="doc.partner_id and doc.partner_id.state_id"><span t-esc="doc.partner_id.state_id.name"/> , </t>
+                        <t t-if="doc.partner_id and doc.partner_id.country_id"><span t-esc="doc.partner_id.country_id.name"/></t>
+                      </span>
+                    </td>
+                    <td style="padding: 1px 3px;">
+                      <span style="visibility: hidden;">業務姓名：</span>
+                      <span style="display: inline-block; text-indent: 1em;">
+                        <span t-esc="doc.create_uid and doc.create_uid.name or ''"/>
+                      </span>
+                    </td>
+                  </tr>
+
+                  <!-- 第五行：連絡電話 / 連絡人 / 倉庫別 -->
+                  <tr style="font-size: 15px; line-height: 16px;">
+                    <td style="padding: 1px 3px;">
+                      <span style="visibility: hidden;">連絡電話：</span>
+                      <span style="display: inline-block; text-indent: 1em;">
+                        <span t-esc="doc.partner_id and (doc.partner_id.phone or '')"/>
+                      </span>
+                    </td>
+                    <td style="padding: 1px 3px;">
+                      <span style="visibility: hidden;">連絡人：</span>
+                      <span style="display: inline-block; text-indent: -1em;">
+                        <span t-esc="doc.partner_id and doc.partner_id.name or ''"/>
+                      </span>
+                    </td>
+                    <td style="padding: 1px 3px;">
+                      <span style="visibility: hidden;">倉庫別：</span>
+                      <span style="display: inline-block; text-indent: 1em;">
+                        <span t-esc="doc.location_dest_id and doc.location_dest_id.complete_name or ''"/>
+                      </span>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+
+              <!-- 明細（每頁固定 10 行） -->
+              <div class="page-content">
+                <div style="height: 5px;"></div>
+                <table class="table" style="margin: 0;">
+                  <thead>
+                    <tr style="font-size: 15px;">
+                      <th style="width: 15%; visibility: hidden; padding: 1px;">產品編號</th>
+                      <th style="width: 25%; visibility: hidden; padding: 1px;">品名 / 規格</th>
+                      <th style="width: 13%; visibility: hidden; padding: 1px;" class="text-right">數量</th>
+                      <th style="width: 10%; visibility: hidden; padding: 1px;" class="text-right">單價</th>
+                      <th style="width: 15%; visibility: hidden; padding: 1px;" class="text-right">金額</th>
+                      <th style="width: 10%; visibility: hidden; padding: 1px;">備註</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <t t-foreach="doc.move_ids_without_package[start_idx:end_idx]" t-as="move">
+                      <!-- 顯示單價與金額：僅作顯示，來源於對應訂單行；不影響下方總計（總計直接抓來源單據） -->
+                      <t t-set="orig" t-value="move.origin_returned_move_id or (move.move_orig_ids and move.move_orig_ids[:1])"/>
+                      <t t-set="sale_line" t-value="move.sale_line_id or (orig and orig.sale_line_id)"/>
+                      <t t-set="purchase_line" t-value="move.purchase_line_id or (orig and orig.purchase_line_id)"/>
+                      <t t-set="unit_price" t-value="(sale_line and sale_line.price_unit) or (purchase_line and purchase_line.price_unit) or 0.0"/>
+                      <t t-set="qty" t-value="move.product_uom_qty or 0.0"/>
+                      <t t-set="subtotal" t-value="unit_price * qty"/>
+
+                      <tr style="font-size: 15px;">
+                        <td style="padding: 1px;">
+                          <span t-esc="move.product_id and move.product_id.default_code or ''"/>
+                        </td>
+                        <td style="padding: 1px;">
+                          <span t-esc="move.product_id and move.product_id.display_name or ''"/>
+                        </td>
+                        <td style="padding: 1px; text-align: right; white-space: nowrap;">
+                          <span style="margin-right: 2em;">
+                            <t t-esc="'%.2f' % qty"/> <t t-esc="move.product_uom and move.product_uom.name or ''"/>
+                          </span>
+                        </td>
+                        <td style="padding: 1px; text-align: right;">
+                          <span style="margin-right: 1em;"><t t-if="unit_price"><t t-esc="'%.2f' % unit_price"/></t></span>
+                        </td>
+                        <td style="padding: 1px 0 1px 1px; text-align: right;">
+                          <span style="margin-right: 3em;"><t t-if="subtotal"><t t-esc="'%.2f' % subtotal"/></t></span>
+                        </td>
+                        <td style="padding: 1px;"></td>
+                      </tr>
+                    </t>
+
+                    <!-- 補空行到 10 筆 -->
+                    <t t-foreach="range(10 - (end_idx - start_idx))" t-as="i">
+                      <tr class="order-row">
+                        <td class="order-cell"></td>
+                        <td class="order-cell"></td>
+                        <td class="order-cell"></td>
+                        <td class="order-cell"></td>
+                        <td class="order-cell"></td>
+                        <!-- <td class="order-cell"></td> -->
+                      </tr>
+                    </t>
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- 最後一頁：右下三行金額（直接抓來源單據，不計算） -->
+              <t t-if="is_last_page and src_order">
+                <!-- 如需再往下 5 行，可打開下一行占位：約 5 x 6mm = 30mm -->
+                <div style="height: 15mm;"></div>
+
+                <div style="position: absolute; right: 0; bottom: 0mm; width: 100%;">
+                  <table style="border-collapse: collapse; margin-left: auto; margin-right: 8em;">
+                    <tr>
+                      <td style="height: 6mm; text-align: right; white-space: nowrap;">
+                        <t t-esc="'$ %.2f' % (src_order.amount_untaxed or 0.0)"/>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="height: 6mm; text-align: right; white-space: nowrap;">
+                        <t t-esc="'$ %.2f' % (src_order.amount_tax or 0.0)"/>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="height: 6mm; text-align: right; white-space: nowrap;">
+                        <t t-esc="'$ %.2f' % (src_order.amount_total or 0.0)"/>
+                      </td>
+                    </tr>
+                  </table>
+                </div>
+              </t>
+
+            </div>
+          </div>
+        </t>
+
+      </t>
+    </t>
+  </template>
+
+</odoo>
