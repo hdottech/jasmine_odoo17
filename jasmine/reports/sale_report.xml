@@ -1,20 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-  <!-- 列印動作：中一刀退貨單（綁定 stock.picking） -->
-  <record id="action_report_zhongyidao_return" model="ir.actions.report">
-    <field name="name">中一刀退貨單</field>
+  <!-- 列印動作：中一刀銷售訂單（綁定 stock.picking） -->
+  <record id="action_report_zhongyidao_sale_order" model="ir.actions.report">
+    <field name="name">中一刀銷售訂單</field>
     <field name="model">stock.picking</field>
     <field name="report_type">qweb-pdf</field>
-    <field name="report_name">jasmine.report_zhongyidao_return</field>
-    <field name="report_file">jasmine.report_zhongyidao_return</field>
-    <field name="print_report_name">'中一刀退貨單 - %s' % object.name</field>
+    <field name="report_name">jasmine.report_zhongyidao_sale_order</field>
+    <field name="report_file">jasmine.report_zhongyidao_sale_order</field>
+    <field name="print_report_name">'中一刀銷售訂單 - %s' % object.name</field>
     <field name="binding_model_id" ref="stock.model_stock_picking"/>
     <field name="binding_type">report</field>
   </record>
 
-  <!-- 模板：中一刀退貨單（版面與你提供的報價單一致） -->
-  <template id="report_zhongyidao_return">
+  <!-- 模板：中一刀銷售訂單（版面與退貨單一致） -->
+  <template id="report_zhongyidao_sale_order">
     <t t-call="web.html_container">
       <t t-foreach="docs" t-as="doc">
 
@@ -42,7 +42,7 @@
             <!-- 固定頁高，讓 bottom:0 真正貼紙張底 -->
             <div class="page" style="font-family: 細明體; position: relative; height: calc(210mm - 14mm);">
 
-              <!-- 樣式（與報價單一致） -->
+              <!-- 樣式（與退貨單一致） -->
               <style>
                 @page { size: 140mm 210mm; margin: 7mm; }
                 body, html { height: auto !important; }
@@ -60,10 +60,10 @@
               <!-- 標題 -->
               <div class="page-header">
                 <div class="text-center" style="margin-bottom: 24px;">
-                  <h1 style="font-size: 24px; letter-spacing: 1em;">退　貨　單</h1>
+                  <h1 style="font-size: 24px; letter-spacing: 1em;">銷售訂單</h1>
                 </div>
 
-                <!-- 基本資訊（五行，欄位同你檔案） -->
+                <!-- 基本資訊（五行，欄位同退貨單） -->
                 <table class="table" style="margin: 0;">
                   <!-- 第一行：客戶代號 / 日期 / 單號 + 製單 -->
                   <tr style="margin-top: -1em; position: relative; top: -1em;">
@@ -164,7 +164,7 @@
                     <td style="padding: 1px 3px;">
                       <span style="visibility: hidden;">倉庫別：</span>
                       <span style="display: inline-block; text-indent: 1em;">
-                        <span t-esc="doc.location_dest_id and doc.location_dest_id.complete_name or ''"/>
+                        <span t-esc="doc.location_id and doc.location_id.complete_name or ''"/>
                       </span>
                     </td>
                   </tr>
@@ -188,9 +188,8 @@
                   <tbody>
                     <t t-foreach="doc.move_ids_without_package[start_idx:end_idx]" t-as="move">
                       <!-- 顯示單價與金額：僅作顯示，來源於對應訂單行；不影響下方總計（總計直接抓來源單據） -->
-                      <t t-set="orig" t-value="move.origin_returned_move_id or (move.move_orig_ids and move.move_orig_ids[:1])"/>
-                      <t t-set="sale_line" t-value="move.sale_line_id or (orig and orig.sale_line_id)"/>
-                      <t t-set="purchase_line" t-value="move.purchase_line_id or (orig and orig.purchase_line_id)"/>
+                      <t t-set="sale_line" t-value="move.sale_line_id"/>
+                      <t t-set="purchase_line" t-value="move.purchase_line_id"/>
                       <t t-set="unit_price" t-value="(sale_line and sale_line.price_unit) or (purchase_line and purchase_line.price_unit) or 0.0"/>
                       <t t-set="qty" t-value="move.product_uom_qty or 0.0"/>
                       <t t-set="subtotal" t-value="unit_price * qty"/>
@@ -232,21 +231,21 @@
                 </table>
               </div>
 
-              <!-- 最後一頁：右下三行金額（計算實際退貨的金額） -->
+<!-- 最後一頁：右下三行金額（計算此單據的實際金額） -->
               <t t-if="is_last_page">
                 <div style="height: 15mm;"></div>
 
-                <!-- 依退貨明細逐行累加未稅/稅額 -->
+                <!-- 依出貨明細累加未稅/稅額 -->
                 <t t-set="untaxed" t-value="0.0"/>
                 <t t-set="tax" t-value="0.0"/>
 
+                <!-- 逐行累加（以出貨單的 move 為準） -->
                 <t t-foreach="doc.move_ids_without_package" t-as="mv">
-                  <!-- 反查原出貨行，取得單價與稅率 -->
-                  <t t-set="orig" t-value="mv.origin_returned_move_id or (mv.move_orig_ids and mv.move_orig_ids[:1])"/>
-                  <t t-set="sale_line" t-value="mv.sale_line_id or (orig and orig.sale_line_id)"/>
-                  <t t-set="purchase_line" t-value="mv.purchase_line_id or (orig and orig.purchase_line_id)"/>
+                  <!-- 直接取得關聯的訂單行 -->
+                  <t t-set="sale_line" t-value="mv.sale_line_id"/>
+                  <t t-set="purchase_line" t-value="mv.purchase_line_id"/>
 
-                  <!-- 單價 / 數量 / 小計 -->
+                  <!-- 單價／數量／小計 -->
                   <t t-set="unit_price" t-value="(sale_line and sale_line.price_unit) or (purchase_line and purchase_line.price_unit) or 0.0"/>
                   <t t-set="qty" t-value="mv.product_uom_qty or mv.quantity_done or 0.0"/>
                   <t t-set="line_subtotal" t-value="unit_price * qty"/>
@@ -281,7 +280,6 @@
                   </table>
                 </div>
               </t>
-
             </div>
           </div>
         </t>

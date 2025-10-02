@@ -26,6 +26,7 @@
         'reports/einvoice_report.xml',
         'reports/test.xml',
         'reports/return.xml',
+        'reports/sale_report.xml',
         'reports/product_template_label_2x5.xml',
         
     ],
